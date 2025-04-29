@@ -1,19 +1,15 @@
-
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { QueueRegistration } from "@/components/customer/QueueRegistration";
 import { QueueCheck } from "@/components/customer/QueueCheck";
-
 const Index: React.FC = () => {
   const [activeTab, setActiveTab] = useState<string>("join-queue");
-
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50">
+  return <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50">
       <div className="container px-4 py-12 mx-auto">
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold text-gray-900 mb-4">
-            ยินดีต้อนรับสู่ <span className="text-com7-primary">Com7 QUEUE</span>
+            ยินดีต้อนรับสู่ <span className="text-green-600">Studio7 Central PlazaWestgate</span>
           </h1>
           <p className="text-xl text-gray-700 max-w-2xl mx-auto">
             วิธีที่ชาญฉลาดในการจัดการเวลารอคอยของคุณ ลงทะเบียนคิวออนไลน์และเราจะแจ้งเตือนเมื่อถึงคิวของคุณ
@@ -93,8 +89,6 @@ const Index: React.FC = () => {
           </div>
         </div>
       </footer>
-    </div>
-  );
+    </div>;
 };
-
 export default Index;
