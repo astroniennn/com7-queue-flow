@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -106,6 +105,9 @@ export const QueueStatus: React.FC<QueueStatusProps> = ({ queueData }) => {
           
           const position = (waitingBefore?.length || 0) + 1;
           
+          // Make sure to type cast the status to the allowed literal types
+          const status = data.status as "waiting" | "almost" | "serving" | "completed" | "cancelled" | "skipped";
+          
           setRefreshedData({
             ticketNumber: data.ticket_number,
             name: data.name,
@@ -114,7 +116,7 @@ export const QueueStatus: React.FC<QueueStatusProps> = ({ queueData }) => {
             registeredAt: data.registered_at,
             estimatedWaitTime: data.estimated_wait_time,
             position: position,
-            status: data.status
+            status: status
           });
         }
       } catch (error) {
