@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -121,27 +120,32 @@ export const QueueStatus: React.FC<QueueStatusProps> = ({ queueData }) => {
           });
         }
       } catch (error) {
-        console.error("Error fetching queue status:", error);
+        console.error("เกิดข้อผิดพลาดในการดึงข้อมูลสถานะคิว:", error);
       }
     };
 
     fetchQueueStatus();
     
-    // Set up real-time subscription for this specific queue record
-    const queueSubscription = supabase
-      .channel(`queue_${queueData.ticketNumber}`)
-      .on('postgres_changes', { 
-        event: 'UPDATE', 
-        schema: 'public', 
-        table: 'queue',
-        filter: `ticket_number=eq.${queueData.ticketNumber}`
-      }, () => {
-        fetchQueueStatus();
-      })
+    // เปลี่ยนวิธีการตั้งค่า Realtime subscription แบบใหม่ที่ถูกต้อง
+    const channel = supabase
+      .channel(`queue_updates_${queueData.ticketNumber}`)
+      .on(
+        'postgres_changes', 
+        { 
+          event: 'UPDATE', 
+          schema: 'public', 
+          table: 'queue', 
+          filter: `ticket_number=eq.${queueData.ticketNumber}`
+        }, 
+        (payload) => {
+          console.log("ได้รับการอัพเดตข้อมูลคิวแบบเรียลไทม์:", payload);
+          fetchQueueStatus();
+        }
+      )
       .subscribe();
     
     return () => {
-      supabase.removeChannel(queueSubscription);
+      supabase.removeChannel(channel);
     };
   }, [queueData.ticketNumber]);
   
@@ -189,7 +193,7 @@ export const QueueStatus: React.FC<QueueStatusProps> = ({ queueData }) => {
       toast.success("ยกเลิกคิวเรียบร้อยแล้ว");
       navigate("/");
     } catch (error) {
-      console.error("Error cancelling queue:", error);
+      console.error("เกิดข้อผิดพลาดในการยกเลิกคิว:", error);
       toast.error("ไม่สามารถยกเลิกได้ กรุณาลองใหม่อีกครั้ง");
     }
   };
