@@ -11,9 +11,7 @@ const Index: React.FC = () => {
           <h1 className="text-4xl font-bold text-gray-900 mb-4">
             ยินดีต้อนรับสู่ <span className="text-green-600">Studio7 Central PlazaWestgate</span>
           </h1>
-          <p className="text-xl text-gray-700 max-w-2xl mx-auto">
-            วิธีที่ชาญฉลาดในการจัดการเวลารอคอยของคุณ ลงทะเบียนคิวออนไลน์และเราจะแจ้งเตือนเมื่อถึงคิวของคุณ
-          </p>
+          <p className="text-xl text-gray-700 max-w-2xl mx-auto">ลงทะเบียนคิวออนไลน์และเราจะแจ้งเตือนเมื่อถึงคิวของคุณ</p>
         </div>
 
         <div className="max-w-md mx-auto">
