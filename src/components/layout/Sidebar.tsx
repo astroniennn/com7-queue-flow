@@ -25,43 +25,43 @@ type NavItem = {
 
 const navItems: NavItem[] = [
   {
-    title: "Queue Dashboard",
+    title: "แดชบอร์ดคิว",
     icon: List,
     href: "/dashboard",
     roles: ["employee", "admin"],
   },
   {
-    title: "Serve Customers",
+    title: "ให้บริการลูกค้า",
     icon: Users,
     href: "/serve",
     roles: ["employee", "admin"],
   },
   {
-    title: "Register Walk-in",
+    title: "ลงทะเบียนลูกค้าหน้าร้าน",
     icon: UserPlus,
     href: "/register-walkin",
     roles: ["employee", "admin"],
   },
   {
-    title: "Queue History",
+    title: "ประวัติคิว",
     icon: Clock,
     href: "/history",
     roles: ["employee", "admin"],
   },
   {
-    title: "Analytics",
+    title: "การวิเคราะห์",
     icon: BarChart4,
     href: "/analytics",
     roles: ["admin"],
   },
   {
-    title: "Service Management",
+    title: "จัดการบริการ",
     icon: Calendar,
     href: "/services",
     roles: ["admin"],
   },
   {
-    title: "System Settings",
+    title: "ตั้งค่าระบบ",
     icon: Settings,
     href: "/settings",
     roles: ["admin"],
@@ -85,7 +85,9 @@ export const Sidebar: React.FC<SidebarProps> = ({ userRole }) => {
           ) : (
             <div className="flex flex-col">
               <span className="text-xl font-bold">Com7 QUEUE</span>
-              <span className="text-xs font-light text-blue-200">{userRole.charAt(0).toUpperCase() + userRole.slice(1)} Portal</span>
+              <span className="text-xs font-light text-blue-200">
+                {userRole === "admin" ? "ระบบผู้ดูแล" : "ระบบพนักงาน"}
+              </span>
             </div>
           )}
         </div>

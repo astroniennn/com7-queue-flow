@@ -45,7 +45,7 @@ const QueueStatusPage: React.FC = () => {
           .single();
         
         if (error) {
-          toast.error("Queue record not found");
+          toast.error("ไม่พบข้อมูลคิวที่ค้นหา");
           setTimeout(() => navigate("/"), 3000);
           return;
         }
@@ -69,11 +69,11 @@ const QueueStatusPage: React.FC = () => {
           registeredAt: data.registered_at,
           estimatedWaitTime: data.estimated_wait_time,
           position: position,
-          status: data.status
+          status: data.status as "waiting" | "almost" | "serving" | "completed" | "cancelled" | "skipped"
         });
       } catch (error) {
         console.error("Error fetching queue data:", error);
-        toast.error("Failed to load queue information");
+        toast.error("ไม่สามารถโหลดข้อมูลคิวได้");
       } finally {
         setLoading(false);
       }
@@ -89,7 +89,7 @@ const QueueStatusPage: React.FC = () => {
           <div className="container mx-auto">
             <div className="max-w-md mx-auto flex flex-col items-center justify-center pt-20">
               <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-com7-primary"></div>
-              <p className="mt-4 text-gray-600">Loading queue information...</p>
+              <p className="mt-4 text-gray-600">กำลังโหลดข้อมูลคิว...</p>
             </div>
           </div>
         </div>
@@ -103,9 +103,9 @@ const QueueStatusPage: React.FC = () => {
         <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 -mt-16 -mb-6 py-16 px-4">
           <div className="container mx-auto">
             <div className="max-w-md mx-auto flex flex-col items-center justify-center pt-20">
-              <div className="text-xl font-semibold text-red-500 mb-4">Queue information not found</div>
-              <p className="text-gray-600 mb-6">We couldn't find the requested queue ticket. It may have been cancelled or expired.</p>
-              <Button onClick={() => navigate("/")}>Return to Home</Button>
+              <div className="text-xl font-semibold text-red-500 mb-4">ไม่พบข้อมูลคิว</div>
+              <p className="text-gray-600 mb-6">เราไม่พบคิวที่คุณต้องการ คิวอาจถูกยกเลิกหรือหมดอายุแล้ว</p>
+              <Button onClick={() => navigate("/")}>กลับไปยังหน้าหลัก</Button>
             </div>
           </div>
         </div>
@@ -127,7 +127,7 @@ const QueueStatusPage: React.FC = () => {
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                 </svg>
-                Back to Home
+                กลับไปยังหน้าหลัก
               </Button>
             </div>
             

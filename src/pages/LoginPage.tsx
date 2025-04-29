@@ -24,7 +24,7 @@ const LoginPage: React.FC = () => {
     e.preventDefault();
     
     if (!formData.username || !formData.password) {
-      toast.error("Please enter both username and password");
+      toast.error("กรุณากรอกชื่อผู้ใช้และรหัสผ่าน");
       return;
     }
 
@@ -37,16 +37,16 @@ const LoginPage: React.FC = () => {
 
       // For demo purposes, using hardcoded credentials
       if (formData.username === "admin" && formData.password === "admin") {
-        toast.success("Login successful!");
+        toast.success("เข้าสู่ระบบสำเร็จ!");
         navigate("/dashboard");
       } else if (formData.username === "employee" && formData.password === "employee") {
-        toast.success("Login successful!");
+        toast.success("เข้าสู่ระบบสำเร็จ!");
         navigate("/dashboard");
       } else {
-        toast.error("Invalid credentials. Please try again.");
+        toast.error("ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง กรุณาลองอีกครั้ง");
       }
     } catch (error) {
-      toast.error("Login failed. Please try again later.");
+      toast.error("เข้าสู่ระบบล้มเหลว กรุณาลองอีกครั้งในภายหลัง");
       console.error("Login error:", error);
     } finally {
       setLoading(false);
@@ -58,28 +58,28 @@ const LoginPage: React.FC = () => {
       <div className="max-w-md w-full">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-gray-900">
-            <span className="text-com7-primary">Com7 QUEUE</span> Staff Portal
+            <span className="text-com7-primary">Com7 QUEUE</span> ระบบจัดการคิว
           </h1>
           <p className="mt-2 text-gray-600">
-            Sign in to manage the queue system
+            เข้าสู่ระบบเพื่อจัดการคิว
           </p>
         </div>
 
         <Card className="animate-fade-in">
           <CardHeader>
-            <CardTitle className="text-2xl font-bold">Sign In</CardTitle>
+            <CardTitle className="text-2xl font-bold">เข้าสู่ระบบ</CardTitle>
             <CardDescription>
-              Enter your credentials to access the dashboard
+              กรอกข้อมูลเพื่อเข้าถึงแผงควบคุม
             </CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="username">Username</Label>
+                <Label htmlFor="username">ชื่อผู้ใช้</Label>
                 <Input
                   id="username"
                   name="username"
-                  placeholder="Enter your username"
+                  placeholder="กรอกชื่อผู้ใช้ของคุณ"
                   value={formData.username}
                   onChange={handleInputChange}
                   required
@@ -88,16 +88,16 @@ const LoginPage: React.FC = () => {
 
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <Label htmlFor="password">Password</Label>
+                  <Label htmlFor="password">รหัสผ่าน</Label>
                   <Button variant="link" className="p-0 h-auto text-xs text-com7-primary">
-                    Forgot password?
+                    ลืมรหัสผ่าน?
                   </Button>
                 </div>
                 <Input
                   id="password"
                   name="password"
                   type="password"
-                  placeholder="Enter your password"
+                  placeholder="กรอกรหัสผ่านของคุณ"
                   value={formData.password}
                   onChange={handleInputChange}
                   required
@@ -110,17 +110,17 @@ const LoginPage: React.FC = () => {
                   className="w-full bg-com7-primary hover:bg-com7-primary-dark"
                   disabled={loading}
                 >
-                  {loading ? "Signing in..." : "Sign In"}
+                  {loading ? "กำลังเข้าสู่ระบบ..." : "เข้าสู่ระบบ"}
                 </Button>
               </CardFooter>
             </form>
             
             <div className="mt-6 text-center">
               <div className="text-sm">
-                <span className="text-gray-600">For demo:</span>
+                <span className="text-gray-600">สำหรับการสาธิต:</span>
                 <ul className="mt-2 space-y-1">
-                  <li><span className="font-semibold">Admin:</span> admin / admin</li>
-                  <li><span className="font-semibold">Employee:</span> employee / employee</li>
+                  <li><span className="font-semibold">ผู้ดูแลระบบ:</span> admin / admin</li>
+                  <li><span className="font-semibold">พนักงาน:</span> employee / employee</li>
                 </ul>
               </div>
             </div>
@@ -129,7 +129,7 @@ const LoginPage: React.FC = () => {
         
         <div className="mt-6 text-center">
           <Button variant="link" onClick={() => navigate("/")} className="text-gray-600">
-            &larr; Back to Customer Portal
+            &larr; กลับไปยังหน้าลูกค้า
           </Button>
         </div>
       </div>

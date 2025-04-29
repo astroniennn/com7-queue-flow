@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -24,44 +25,44 @@ const getStatusInfo = (status: string) => {
   switch (status) {
     case "waiting":
       return {
-        title: "In Queue",
-        description: "You are currently in line. Please wait for your turn.",
+        title: "รอคิว",
+        description: "คุณกำลังรอคิวอยู่ กรุณารอจนกว่าจะถึงคิวของคุณ",
         color: "bg-amber-500"
       };
     case "almost":
       return {
-        title: "Almost Your Turn",
-        description: "Please proceed to the waiting area. You'll be called shortly.",
+        title: "ใกล้ถึงคิวของคุณแล้ว",
+        description: "กรุณามาที่พื้นที่รอ เราจะเรียกคุณในไม่ช้า",
         color: "bg-blue-500"
       };
     case "serving":
       return {
-        title: "Now Serving",
-        description: "Please proceed to the service counter immediately.",
+        title: "กำลังให้บริการ",
+        description: "กรุณามาที่เคาน์เตอร์บริการทันที",
         color: "bg-com7-primary"
       };
     case "completed":
       return {
-        title: "Service Completed",
-        description: "Thank you for visiting us.",
+        title: "บริการเสร็จสิ้น",
+        description: "ขอบคุณที่มาใช้บริการ",
         color: "bg-green-500"
       };
     case "cancelled":
       return {
-        title: "Cancelled",
-        description: "Your queue position has been cancelled.",
+        title: "ยกเลิกแล้ว",
+        description: "คิวของคุณถูกยกเลิกแล้ว",
         color: "bg-red-500"
       };
     case "skipped":
       return {
-        title: "Skipped",
-        description: "Your turn was skipped. Please check with our staff.",
+        title: "ข้ามคิว",
+        description: "คิวของคุณถูกข้าม กรุณาติดต่อพนักงาน",
         color: "bg-purple-500"
       };
     default:
       return {
-        title: "Unknown Status",
-        description: "Please check with our staff for assistance.",
+        title: "สถานะไม่ทราบ",
+        description: "กรุณาติดต่อพนักงานเพื่อขอความช่วยเหลือ",
         color: "bg-gray-500"
       };
   }
@@ -185,11 +186,11 @@ export const QueueStatus: React.FC<QueueStatusProps> = ({ queueData }) => {
       
       if (error) throw error;
       
-      toast.success("Your queue position has been cancelled.");
+      toast.success("ยกเลิกคิวเรียบร้อยแล้ว");
       navigate("/");
     } catch (error) {
       console.error("Error cancelling queue:", error);
-      toast.error("Failed to cancel. Please try again.");
+      toast.error("ไม่สามารถยกเลิกได้ กรุณาลองใหม่อีกครั้ง");
     }
   };
   
@@ -211,11 +212,11 @@ export const QueueStatus: React.FC<QueueStatusProps> = ({ queueData }) => {
       <CardContent className="pt-6 space-y-6">
         <div className="flex justify-between items-center">
           <div className="text-center px-4 py-2 bg-com7-light-gray rounded-lg flex-1 mr-2">
-            <div className="text-sm text-gray-500">Ticket #</div>
+            <div className="text-sm text-gray-500">คิวหมายเลข</div>
             <div className="font-bold text-xl">{refreshedData.ticketNumber}</div>
           </div>
           <div className="text-center px-4 py-2 bg-com7-light-gray rounded-lg flex-1 ml-2">
-            <div className="text-sm text-gray-500">Position</div>
+            <div className="text-sm text-gray-500">ตำแหน่งคิว</div>
             <div className="font-bold text-xl">{refreshedData.position}</div>
           </div>
         </div>
@@ -224,7 +225,7 @@ export const QueueStatus: React.FC<QueueStatusProps> = ({ queueData }) => {
           <div className="flex items-center">
             <Users className="h-5 w-5 text-com7-primary mr-2" />
             <div>
-              <div className="text-sm text-gray-500">Name</div>
+              <div className="text-sm text-gray-500">ชื่อ</div>
               <div className="font-medium">{refreshedData.name}</div>
             </div>
           </div>
@@ -232,7 +233,7 @@ export const QueueStatus: React.FC<QueueStatusProps> = ({ queueData }) => {
           <div className="flex items-center">
             <Info className="h-5 w-5 text-com7-primary mr-2" />
             <div>
-              <div className="text-sm text-gray-500">Service</div>
+              <div className="text-sm text-gray-500">บริการ</div>
               <div className="font-medium">{refreshedData.serviceType}</div>
             </div>
           </div>
@@ -240,8 +241,8 @@ export const QueueStatus: React.FC<QueueStatusProps> = ({ queueData }) => {
           <div className="flex items-center">
             <Calendar className="h-5 w-5 text-com7-primary mr-2" />
             <div>
-              <div className="text-sm text-gray-500">Registered On</div>
-              <div className="font-medium">{registrationDate} at {registrationTime}</div>
+              <div className="text-sm text-gray-500">ลงทะเบียนเมื่อ</div>
+              <div className="font-medium">{registrationDate} เวลา {registrationTime}</div>
             </div>
           </div>
           
@@ -250,13 +251,13 @@ export const QueueStatus: React.FC<QueueStatusProps> = ({ queueData }) => {
               <div className="flex items-center">
                 <Clock className="h-5 w-5 text-com7-primary mr-2" />
                 <div>
-                  <div className="text-sm text-gray-500">Estimated Wait Time</div>
-                  <div className="font-medium">{remainingTime} minutes</div>
+                  <div className="text-sm text-gray-500">เวลารอโดยประมาณ</div>
+                  <div className="font-medium">{remainingTime} นาที</div>
                 </div>
               </div>
               <div>
                 <div className="flex justify-between text-xs text-gray-500 mb-1">
-                  <span>Progress</span>
+                  <span>ความคืบหน้า</span>
                   <span>{Math.round(elapsedPercent)}%</span>
                 </div>
                 <Progress value={elapsedPercent} className="h-2" />
@@ -273,14 +274,14 @@ export const QueueStatus: React.FC<QueueStatusProps> = ({ queueData }) => {
             className="flex-1 border-red-500 text-red-500 hover:bg-red-50"
             onClick={handleCancel}
           >
-            Cancel
+            ยกเลิก
           </Button>
           <Button
             variant="outline"
             className="flex-1 border-com7-primary text-com7-primary hover:bg-blue-50"
             onClick={handleReschedule}
           >
-            Reschedule
+            เปลี่ยนเวลา
           </Button>
         </CardFooter>
       )}

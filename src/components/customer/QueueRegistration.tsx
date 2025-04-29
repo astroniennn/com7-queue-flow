@@ -44,7 +44,7 @@ export const QueueRegistration: React.FC = () => {
         setServiceTypes(data || []);
       } catch (error) {
         console.error("Error fetching service types:", error);
-        toast.error("Failed to load service types");
+        toast.error("ไม่สามารถโหลดประเภทบริการได้");
       }
     };
 
@@ -64,7 +64,7 @@ export const QueueRegistration: React.FC = () => {
     e.preventDefault();
     
     if (!formData.name || !formData.phoneNumber || !formData.serviceTypeId) {
-      toast.error("Please fill all required fields");
+      toast.error("กรุณากรอกข้อมูลให้ครบทุกช่อง");
       return;
     }
 
@@ -75,7 +75,7 @@ export const QueueRegistration: React.FC = () => {
       const selectedService = serviceTypes.find(s => s.id === formData.serviceTypeId);
       
       if (!selectedService) {
-        throw new Error("Selected service type not found");
+        throw new Error("ไม่พบประเภทบริการที่เลือก");
       }
 
       // Insert new queue entry
@@ -109,10 +109,10 @@ export const QueueRegistration: React.FC = () => {
         }
       });
 
-      toast.success("Queue registration successful!");
+      toast.success("ลงทะเบียนคิวสำเร็จ!");
     } catch (error) {
       console.error("Registration error:", error);
-      toast.error("Failed to register. Please try again.");
+      toast.error("ลงทะเบียนล้มเหลว กรุณาลองอีกครั้ง");
     } finally {
       setLoading(false);
     }
@@ -121,19 +121,19 @@ export const QueueRegistration: React.FC = () => {
   return (
     <Card className="w-full max-w-md mx-auto animate-fade-in">
       <CardHeader>
-        <CardTitle className="text-2xl font-bold text-center text-com7-primary">Join the Queue</CardTitle>
+        <CardTitle className="text-2xl font-bold text-center text-com7-primary">จองคิว</CardTitle>
         <CardDescription className="text-center">
-          Enter your information to secure your place in line
+          กรอกข้อมูลของคุณเพื่อจองคิว
         </CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="name">Full Name</Label>
+            <Label htmlFor="name">ชื่อ-นามสกุล</Label>
             <Input
               id="name"
               name="name"
-              placeholder="Enter your full name"
+              placeholder="กรอกชื่อ-นามสกุลของคุณ"
               value={formData.name}
               onChange={handleInputChange}
               required
@@ -141,12 +141,12 @@ export const QueueRegistration: React.FC = () => {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="phoneNumber">Phone Number</Label>
+            <Label htmlFor="phoneNumber">เบอร์โทรศัพท์</Label>
             <Input
               id="phoneNumber"
               name="phoneNumber"
               type="tel"
-              placeholder="Enter your phone number"
+              placeholder="กรอกเบอร์โทรศัพท์ของคุณ"
               value={formData.phoneNumber}
               onChange={handleInputChange}
               required
@@ -154,15 +154,15 @@ export const QueueRegistration: React.FC = () => {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="serviceType">Service Needed</Label>
+            <Label htmlFor="serviceType">บริการที่ต้องการ</Label>
             <Select value={formData.serviceTypeId} onValueChange={handleServiceChange}>
               <SelectTrigger id="serviceType" className="w-full">
-                <SelectValue placeholder="Select service type" />
+                <SelectValue placeholder="เลือกประเภทบริการ" />
               </SelectTrigger>
               <SelectContent>
                 {serviceTypes.map((service) => (
                   <SelectItem key={service.id} value={service.id}>
-                    {service.name} (~{service.estimated_time} min)
+                    {service.name} (~{service.estimated_time} นาที)
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -175,7 +175,7 @@ export const QueueRegistration: React.FC = () => {
               className="w-full bg-com7-primary hover:bg-com7-primary-dark transition-colors"
               disabled={loading}
             >
-              {loading ? "Processing..." : "Get in Queue"}
+              {loading ? "กำลังดำเนินการ..." : "จองคิว"}
             </Button>
           </CardFooter>
         </form>

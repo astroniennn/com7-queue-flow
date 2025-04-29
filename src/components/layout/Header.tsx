@@ -14,11 +14,11 @@ export const Header: React.FC<HeaderProps> = ({ userRole = "customer" }) => {
   const getHeaderTitle = () => {
     switch (userRole) {
       case "employee":
-        return "Queue Management Dashboard";
+        return "ระบบจัดการคิว";
       case "admin":
-        return "Admin Control Panel";
+        return "แผงควบคุมผู้ดูแลระบบ";
       default:
-        return "Welcome to Com7 QUEUE";
+        return "ยินดีต้อนรับสู่ Com7 QUEUE";
     }
   };
 
@@ -45,7 +45,7 @@ export const Header: React.FC<HeaderProps> = ({ userRole = "customer" }) => {
                 <User className="h-5 w-5 text-white" />
               </div>
               <span className="text-sm font-medium hidden md:inline-block">
-                {userRole === "admin" ? "Administrator" : "Staff Member"}
+                {userRole === "admin" ? "ผู้ดูแลระบบ" : "พนักงาน"}
               </span>
             </div>
           </>
@@ -55,7 +55,7 @@ export const Header: React.FC<HeaderProps> = ({ userRole = "customer" }) => {
             size="sm"
             onClick={handleLoginClick}
           >
-            Staff Login
+            เข้าสู่ระบบสำหรับพนักงาน
           </Button>
         )}
       </div>

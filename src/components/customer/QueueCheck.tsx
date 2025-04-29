@@ -19,7 +19,7 @@ export const QueueCheck: React.FC = () => {
     e.preventDefault();
     
     if (!phoneNumber && !ticketNumber) {
-      toast.error("Please enter either your phone number or ticket number");
+      toast.error("กรุณากรอกเบอร์โทรศัพท์หรือหมายเลขคิวของคุณ");
       return;
     }
 
@@ -49,7 +49,7 @@ export const QueueCheck: React.FC = () => {
       
       if (error) {
         if (error.code === 'PGRST116') {
-          toast.error("No queue record found with the provided information");
+          toast.error("ไม่พบข้อมูลคิวจากข้อมูลที่ให้มา");
         } else {
           throw error;
         }
@@ -89,7 +89,7 @@ export const QueueCheck: React.FC = () => {
       }
     } catch (error) {
       console.error("Queue check error:", error);
-      toast.error("Failed to check queue status. Please try again.");
+      toast.error("ไม่สามารถตรวจสอบสถานะคิวได้ กรุณาลองใหม่อีกครั้ง");
     } finally {
       setLoading(false);
     }
@@ -98,18 +98,18 @@ export const QueueCheck: React.FC = () => {
   return (
     <Card className="w-full max-w-md mx-auto">
       <CardHeader>
-        <CardTitle className="text-2xl font-bold text-center text-com7-primary">Check Your Queue Status</CardTitle>
+        <CardTitle className="text-2xl font-bold text-center text-com7-primary">ตรวจสอบสถานะคิวของคุณ</CardTitle>
         <CardDescription className="text-center">
-          Enter your phone number or ticket number to check your current position
+          กรอกเบอร์โทรศัพท์หรือหมายเลขคิวเพื่อตรวจสอบตำแหน่งคิวปัจจุบันของคุณ
         </CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleCheckQueue} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="phoneNumber">Phone Number</Label>
+            <Label htmlFor="phoneNumber">เบอร์โทรศัพท์</Label>
             <Input
               id="phoneNumber"
-              placeholder="Enter phone number used for registration"
+              placeholder="กรอกเบอร์โทรศัพท์ที่ใช้ลงทะเบียน"
               value={phoneNumber}
               onChange={(e) => setPhoneNumber(e.target.value)}
             />
@@ -117,15 +117,15 @@ export const QueueCheck: React.FC = () => {
 
           <div className="flex items-center">
             <div className="flex-grow border-t border-gray-200"></div>
-            <span className="flex-shrink mx-4 text-gray-400">OR</span>
+            <span className="flex-shrink mx-4 text-gray-400">หรือ</span>
             <div className="flex-grow border-t border-gray-200"></div>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="ticketNumber">Ticket Number</Label>
+            <Label htmlFor="ticketNumber">หมายเลขคิว</Label>
             <Input
               id="ticketNumber"
-              placeholder="Enter your ticket number"
+              placeholder="กรอกหมายเลขคิวของคุณ"
               value={ticketNumber}
               onChange={(e) => setTicketNumber(e.target.value)}
             />
@@ -138,7 +138,7 @@ export const QueueCheck: React.FC = () => {
               disabled={loading}
             >
               <Search className="mr-2 h-4 w-4" />
-              {loading ? "Checking..." : "Check Status"}
+              {loading ? "กำลังตรวจสอบ..." : "ตรวจสอบสถานะ"}
             </Button>
           </CardFooter>
         </form>

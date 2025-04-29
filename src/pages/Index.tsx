@@ -13,18 +13,18 @@ const Index: React.FC = () => {
       <div className="container px-4 py-12 mx-auto">
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold text-gray-900 mb-4">
-            Welcome to <span className="text-com7-primary">Com7 QUEUE</span>
+            ยินดีต้อนรับสู่ <span className="text-com7-primary">Com7 QUEUE</span>
           </h1>
           <p className="text-xl text-gray-700 max-w-2xl mx-auto">
-            The smarter way to manage your wait time. Join our queue online and we'll notify you when it's your turn.
+            วิธีที่ชาญฉลาดในการจัดการเวลารอคอยของคุณ ลงทะเบียนคิวออนไลน์และเราจะแจ้งเตือนเมื่อถึงคิวของคุณ
           </p>
         </div>
 
         <div className="max-w-md mx-auto">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="join-queue">Join Queue</TabsTrigger>
-              <TabsTrigger value="check-status">Check Status</TabsTrigger>
+              <TabsTrigger value="join-queue">จองคิว</TabsTrigger>
+              <TabsTrigger value="check-status">ตรวจสอบสถานะ</TabsTrigger>
             </TabsList>
             <div className="mt-6">
               <TabsContent value="join-queue" className="mt-0">
@@ -45,9 +45,9 @@ const Index: React.FC = () => {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               </div>
-              <h3 className="text-lg font-semibold mb-2">Save Time</h3>
+              <h3 className="text-lg font-semibold mb-2">ประหยัดเวลา</h3>
               <p className="text-gray-600 text-sm">
-                Join the queue remotely and arrive just in time for your service.
+                จองคิวจากระยะไกลและมาถึงพอดีเมื่อถึงเวลารับบริการ
               </p>
             </div>
 
@@ -57,9 +57,9 @@ const Index: React.FC = () => {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
                 </svg>
               </div>
-              <h3 className="text-lg font-semibold mb-2">Real-time Updates</h3>
+              <h3 className="text-lg font-semibold mb-2">อัปเดตแบบเรียลไทม์</h3>
               <p className="text-gray-600 text-sm">
-                Receive notifications about your queue status and estimated wait time.
+                รับการแจ้งเตือนเกี่ยวกับสถานะคิวและเวลารอโดยประมาณของคุณ
               </p>
             </div>
 
@@ -69,9 +69,9 @@ const Index: React.FC = () => {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                 </svg>
               </div>
-              <h3 className="text-lg font-semibold mb-2">Secure & Private</h3>
+              <h3 className="text-lg font-semibold mb-2">ปลอดภัยและเป็นส่วนตัว</h3>
               <p className="text-gray-600 text-sm">
-                Your information is kept secure and only used for queue management.
+                ข้อมูลของคุณจะถูกเก็บไว้อย่างปลอดภัยและใช้เฉพาะสำหรับการจัดการคิวเท่านั้น
               </p>
             </div>
           </div>
@@ -82,13 +82,13 @@ const Index: React.FC = () => {
         <div className="container mx-auto px-4">
           <div className="flex flex-col md:flex-row justify-between items-center">
             <div className="mb-4 md:mb-0">
-              <p className="text-gray-600">&copy; 2025 Com7 QUEUE. All rights reserved.</p>
+              <p className="text-gray-600">&copy; 2025 Com7 QUEUE สงวนลิขสิทธิ์</p>
             </div>
             <div className="flex space-x-4">
-              <Button variant="ghost" size="sm">About</Button>
-              <Button variant="ghost" size="sm">Privacy</Button>
-              <Button variant="ghost" size="sm">Terms</Button>
-              <Button variant="ghost" size="sm">Contact</Button>
+              <Button variant="ghost" size="sm">เกี่ยวกับเรา</Button>
+              <Button variant="ghost" size="sm">ความเป็นส่วนตัว</Button>
+              <Button variant="ghost" size="sm">เงื่อนไขการใช้งาน</Button>
+              <Button variant="ghost" size="sm">ติดต่อเรา</Button>
             </div>
           </div>
         </div>

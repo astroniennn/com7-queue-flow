@@ -73,7 +73,7 @@ export const QueueDashboard: React.FC = () => {
       setCustomers(transformedData);
     } catch (error) {
       console.error("Error fetching queue data:", error);
-      toast.error("Failed to load queue data");
+      toast.error("ไม่สามารถโหลดข้อมูลคิวได้");
     } finally {
       setIsLoading(false);
     }
@@ -108,11 +108,11 @@ export const QueueDashboard: React.FC = () => {
       
       if (error) throw error;
       
-      toast.success(`Now serving ${customer.name}`);
+      toast.success(`กำลังให้บริการ ${customer.name}`);
       fetchQueueData();
     } catch (error) {
       console.error("Error updating customer status:", error);
-      toast.error("Failed to update customer status");
+      toast.error("ไม่สามารถอัปเดตสถานะลูกค้าได้");
     }
   };
   
@@ -125,11 +125,11 @@ export const QueueDashboard: React.FC = () => {
       
       if (error) throw error;
       
-      toast.success(`Service started for ${customer.name}`);
+      toast.success(`เริ่มให้บริการ ${customer.name}`);
       fetchQueueData();
     } catch (error) {
       console.error("Error updating customer status:", error);
-      toast.error("Failed to update customer status");
+      toast.error("ไม่สามารถอัปเดตสถานะลูกค้าได้");
     }
   };
   
@@ -145,11 +145,11 @@ export const QueueDashboard: React.FC = () => {
       
       if (error) throw error;
       
-      toast.success(`Service completed for ${customer.name}`);
+      toast.success(`ให้บริการ ${customer.name} เสร็จสิ้น`);
       fetchQueueData();
     } catch (error) {
       console.error("Error completing service:", error);
-      toast.error("Failed to complete service");
+      toast.error("ไม่สามารถเสร็จสิ้นการให้บริการได้");
     }
   };
   
@@ -162,11 +162,11 @@ export const QueueDashboard: React.FC = () => {
       
       if (error) throw error;
       
-      toast.info(`${customer.name} has been skipped`);
+      toast.info(`ข้ามคิวของ ${customer.name} แล้ว`);
       fetchQueueData();
     } catch (error) {
       console.error("Error skipping customer:", error);
-      toast.error("Failed to skip customer");
+      toast.error("ไม่สามารถข้ามคิวลูกค้าได้");
     }
   };
   
@@ -179,33 +179,33 @@ export const QueueDashboard: React.FC = () => {
       
       if (error) throw error;
       
-      toast.info(`Service cancelled for ${customer.name}`);
+      toast.info(`ยกเลิกการให้บริการ ${customer.name} แล้ว`);
       fetchQueueData();
     } catch (error) {
       console.error("Error cancelling service:", error);
-      toast.error("Failed to cancel service");
+      toast.error("ไม่สามารถยกเลิกการให้บริการได้");
     }
   };
   
   const handleRefresh = () => {
     fetchQueueData();
-    toast.success("Queue data refreshed");
+    toast.success("รีเฟรชข้อมูลคิวแล้ว");
   };
   
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "waiting":
-        return <Badge variant="outline" className="bg-amber-100 text-amber-800 border-amber-300">Waiting</Badge>;
+        return <Badge variant="outline" className="bg-amber-100 text-amber-800 border-amber-300">รอคิว</Badge>;
       case "serving":
-        return <Badge variant="outline" className="bg-blue-100 text-blue-800 border-blue-300">Serving</Badge>;
+        return <Badge variant="outline" className="bg-blue-100 text-blue-800 border-blue-300">กำลังให้บริการ</Badge>;
       case "completed":
-        return <Badge variant="outline" className="bg-green-100 text-green-800 border-green-300">Completed</Badge>;
+        return <Badge variant="outline" className="bg-green-100 text-green-800 border-green-300">เสร็จสิ้น</Badge>;
       case "cancelled":
-        return <Badge variant="outline" className="bg-red-100 text-red-800 border-red-300">Cancelled</Badge>;
+        return <Badge variant="outline" className="bg-red-100 text-red-800 border-red-300">ยกเลิก</Badge>;
       case "skipped":
-        return <Badge variant="outline" className="bg-purple-100 text-purple-800 border-purple-300">Skipped</Badge>;
+        return <Badge variant="outline" className="bg-purple-100 text-purple-800 border-purple-300">ข้ามคิว</Badge>;
       default:
-        return <Badge variant="outline">Unknown</Badge>;
+        return <Badge variant="outline">ไม่ทราบ</Badge>;
     }
   };
   
@@ -234,7 +234,7 @@ export const QueueDashboard: React.FC = () => {
     if (filtered.length === 0) {
       return (
         <div className="py-10 text-center text-gray-500">
-          <p>No customers found</p>
+          <p>ไม่พบข้อมูลลูกค้า</p>
         </div>
       );
     }
@@ -267,7 +267,7 @@ export const QueueDashboard: React.FC = () => {
                     </div>
                     <div className="flex items-center ml-3 text-xs text-gray-500">
                       <Clock className="h-3 w-3 mr-1" />
-                      Est: {customer.estimated_wait_time} min
+                      ประมาณ: {customer.estimated_wait_time} นาที
                     </div>
                   </div>
                 </div>
@@ -281,7 +281,7 @@ export const QueueDashboard: React.FC = () => {
                         className="bg-com7-primary hover:bg-com7-primary-dark"
                       >
                         <Bell className="h-4 w-4 mr-1" />
-                        Call
+                        เรียกคิว
                       </Button>
                       <Button 
                         size="sm"
@@ -290,7 +290,7 @@ export const QueueDashboard: React.FC = () => {
                         className="border-gray-300 text-gray-700"
                       >
                         <SkipForward className="h-4 w-4 mr-1" />
-                        Skip
+                        ข้ามคิว
                       </Button>
                       <Button 
                         size="sm"
@@ -311,7 +311,7 @@ export const QueueDashboard: React.FC = () => {
                         className="bg-green-600 hover:bg-green-700"
                       >
                         <Check className="h-4 w-4 mr-1" />
-                        Complete
+                        เสร็จสิ้น
                       </Button>
                       <Button 
                         size="sm"
@@ -326,7 +326,7 @@ export const QueueDashboard: React.FC = () => {
                   
                   {(customer.status === "completed" || customer.status === "cancelled" || customer.status === "skipped") && (
                     <span className="text-sm text-gray-500">
-                      No actions available
+                      ไม่มีการดำเนินการที่ใช้ได้
                     </span>
                   )}
                 </div>
@@ -341,7 +341,7 @@ export const QueueDashboard: React.FC = () => {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold text-gray-800">Queue Dashboard</h2>
+        <h2 className="text-2xl font-bold text-gray-800">แดชบอร์ดคิว</h2>
         <Button 
           size="sm" 
           variant="outline"
@@ -350,14 +350,14 @@ export const QueueDashboard: React.FC = () => {
           disabled={isLoading}
         >
           <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? "animate-spin" : ""}`} />
-          {isLoading ? "Refreshing..." : "Refresh"}
+          {isLoading ? "กำลังรีเฟรช..." : "รีเฟรช"}
         </Button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-xl text-center">Waiting</CardTitle>
+            <CardTitle className="text-xl text-center">รอคิว</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-4xl font-bold text-center text-amber-500">
@@ -367,7 +367,7 @@ export const QueueDashboard: React.FC = () => {
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-xl text-center">Now Serving</CardTitle>
+            <CardTitle className="text-xl text-center">กำลังให้บริการ</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-4xl font-bold text-center text-com7-primary">
@@ -377,7 +377,7 @@ export const QueueDashboard: React.FC = () => {
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-xl text-center">Completed Today</CardTitle>
+            <CardTitle className="text-xl text-center">เสร็จสิ้นวันนี้</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-4xl font-bold text-center text-green-600">
@@ -392,7 +392,7 @@ export const QueueDashboard: React.FC = () => {
           <div className="relative w-full md:w-64">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
             <Input 
-              placeholder="Search by name, phone or ticket #"
+              placeholder="ค้นหาด้วยชื่อ เบอร์โทร หรือเลขคิว"
               className="pl-9"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -402,22 +402,22 @@ export const QueueDashboard: React.FC = () => {
           <Tabs defaultValue="waiting" className="w-full" value={activeTab} onValueChange={setActiveTab}>
             <TabsList className="grid grid-cols-4 md:w-[400px]">
               <TabsTrigger value="waiting" className="flex items-center">
-                Waiting
+                รอคิว
                 <span className="ml-1 inline-flex items-center justify-center w-5 h-5 text-xs bg-amber-100 text-amber-800 rounded-full">
                   {getTabCount("waiting")}
                 </span>
               </TabsTrigger>
               <TabsTrigger value="serving">
-                Serving
+                กำลังให้บริการ
                 <span className="ml-1 inline-flex items-center justify-center w-5 h-5 text-xs bg-blue-100 text-blue-800 rounded-full">
                   {getTabCount("serving")}
                 </span>
               </TabsTrigger>
               <TabsTrigger value="completed">
-                Completed
+                เสร็จสิ้น
               </TabsTrigger>
               <TabsTrigger value="all">
-                All
+                ทั้งหมด
               </TabsTrigger>
             </TabsList>
           </Tabs>
@@ -427,7 +427,7 @@ export const QueueDashboard: React.FC = () => {
           <div className="flex justify-center p-10">
             <div className="animate-pulse flex flex-col items-center">
               <div className="h-8 w-8 rounded-full bg-gray-300 mb-2"></div>
-              <div className="text-gray-400">Loading queue data...</div>
+              <div className="text-gray-400">กำลังโหลดข้อมูลคิว...</div>
             </div>
           </div>
         ) : (
