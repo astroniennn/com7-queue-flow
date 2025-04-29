@@ -55,7 +55,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       <div className="p-4 flex items-center justify-between border-b border-blue-600">
         <div className={cn("flex items-center", collapsed ? "justify-center w-full" : "")}>
           {collapsed ? <span className="text-2xl font-bold">C7</span> : <div className="flex flex-col">
-              <span className="text-xl font-bold">Com7 QUEUE</span>
+              <span className="text-xl font-bold">Studio 7 westgate</span>
               <span className="text-xs font-light text-blue-200">
                 {userRole === "admin" ? "ระบบผู้ดูแล" : "ระบบพนักงาน"}
               </span>
