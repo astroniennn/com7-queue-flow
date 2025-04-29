@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -61,7 +62,18 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
-				}
+				},
+				// Com7 QUEUE custom colors
+				com7: {
+					'primary': '#3B82F6',
+					'primary-dark': '#1E40AF',
+					'secondary': '#8B5CF6',
+					'success': '#10B981',
+					'warning': '#FBBF24',
+					'error': '#EF4444',
+					'light-gray': '#F3F4F6',
+					'dark-gray': '#4B5563'
+				},
 			},
 			borderRadius: {
 				lg: 'var(--radius)',
@@ -84,11 +96,31 @@ export default {
 					to: {
 						height: '0'
 					}
+				},
+				'fade-in': {
+					'0%': {
+						opacity: '0',
+						transform: 'translateY(10px)'
+					},
+					'100%': {
+						opacity: '1',
+						transform: 'translateY(0)'
+					}
+				},
+				'pulse-subtle': {
+					'0%, 100%': {
+						opacity: '1'
+					},
+					'50%': {
+						opacity: '0.7'
+					}
 				}
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
-				'accordion-up': 'accordion-up 0.2s ease-out'
+				'accordion-up': 'accordion-up 0.2s ease-out',
+				'fade-in': 'fade-in 0.3s ease-out',
+				'pulse-subtle': 'pulse-subtle 2s ease-in-out infinite'
 			}
 		}
 	},
