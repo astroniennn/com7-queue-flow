@@ -248,26 +248,26 @@ export const QueueDashboard: React.FC = () => {
                 <div className="p-4 md:w-2/3">
                   <div className="flex justify-between mb-2">
                     <div className="flex items-center space-x-2">
-                      <span className="font-semibold text-lg">#{customer.ticketNumber}</span>
+                      <span className="font-semibold text-lg">#{customer.ticket_number}</span>
                       {getStatusBadge(customer.status)}
                     </div>
                     <div className="text-sm text-gray-500">
-                      {new Date(customer.registeredAt).toLocaleTimeString()}
+                      {new Date(customer.registered_at).toLocaleTimeString()}
                     </div>
                   </div>
                   
                   <div className="flex flex-col space-y-1 mb-2">
                     <div className="font-medium">{customer.name}</div>
-                    <div className="text-sm text-gray-500">{customer.phoneNumber}</div>
+                    <div className="text-sm text-gray-500">{customer.phone_number}</div>
                   </div>
                   
                   <div className="flex items-center">
                     <div className="px-2 py-1 bg-com7-light-gray rounded text-xs text-gray-600">
-                      {customer.serviceType}
+                      {customer.service_type}
                     </div>
                     <div className="flex items-center ml-3 text-xs text-gray-500">
                       <Clock className="h-3 w-3 mr-1" />
-                      Est: {customer.estimatedWaitTime} min
+                      Est: {customer.estimated_wait_time} min
                     </div>
                   </div>
                 </div>

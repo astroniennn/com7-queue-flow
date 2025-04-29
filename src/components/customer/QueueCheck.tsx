@@ -68,6 +68,9 @@ export const QueueCheck: React.FC = () => {
         
         const position = (waitingBefore?.length || 0) + 1;
         
+        // Ensure status is one of the valid literal types
+        const typedStatus = data.status as "waiting" | "almost" | "serving" | "completed" | "cancelled" | "skipped";
+        
         // Navigate to status page with the found data
         navigate(`/queue-status/${data.ticket_number}`, {
           state: {
@@ -79,7 +82,7 @@ export const QueueCheck: React.FC = () => {
               registeredAt: data.registered_at,
               estimatedWaitTime: data.estimated_wait_time,
               position: position,
-              status: data.status
+              status: typedStatus
             }
           }
         });
