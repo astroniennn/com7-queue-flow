@@ -138,7 +138,7 @@ export const QueueRegistration: React.FC = () => {
           </div>
           
           <CardFooter className="px-0 pt-4">
-            <Button type="submit" className="w-full bg-com7-primary hover:bg-com7-primary-dark transition-colors" disabled={loading}>
+            <Button type="submit" disabled={loading} className="w-full hover:bg-com7-primary-dark transition-colors bg-green-600 hover:bg-green-500">
               {loading ? "กำลังดำเนินการ..." : "จองคิว"}
             </Button>
           </CardFooter>
