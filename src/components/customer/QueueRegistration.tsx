@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,15 +13,13 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { supabase } from "@/integrations/supabase/client";
 
-// Mock service types for demonstration
-const SERVICE_TYPES = [
-  { id: 1, name: "Product Inquiry", estimatedTime: 10 },
-  { id: 2, name: "Technical Support", estimatedTime: 15 },
-  { id: 3, name: "Returns & Exchanges", estimatedTime: 20 },
-  { id: 4, name: "Warranty Claims", estimatedTime: 25 },
-  { id: 5, name: "Billing Issues", estimatedTime: 15 },
-];
+type ServiceType = {
+  id: string;
+  name: string;
+  estimated_time: number;
+};
 
 export const QueueRegistration: React.FC = () => {
   const navigate = useNavigate();
@@ -31,6 +29,27 @@ export const QueueRegistration: React.FC = () => {
     serviceTypeId: "",
   });
   const [loading, setLoading] = useState(false);
+  const [serviceTypes, setServiceTypes] = useState<ServiceType[]>([]);
+
+  useEffect(() => {
+    const fetchServiceTypes = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('service_types')
+          .select('*')
+          .order('name');
+        
+        if (error) throw error;
+        
+        setServiceTypes(data || []);
+      } catch (error) {
+        console.error("Error fetching service types:", error);
+        toast.error("Failed to load service types");
+      }
+    };
+
+    fetchServiceTypes();
+  }, []);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -52,33 +71,48 @@ export const QueueRegistration: React.FC = () => {
     setLoading(true);
 
     try {
-      // In a real application, this would be an API call
-      // Simulating API call with timeout
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      // Generate a random ticket number for demo purposes
-      const ticketNumber = Math.floor(10000 + Math.random() * 90000);
+      // Get selected service type for estimated time
+      const selectedService = serviceTypes.find(s => s.id === formData.serviceTypeId);
       
-      // Mock registration success and navigate to status page
-      navigate(`/queue-status/${ticketNumber}`, {
+      if (!selectedService) {
+        throw new Error("Selected service type not found");
+      }
+
+      // Insert new queue entry
+      const { data, error } = await supabase
+        .from('queue')
+        .insert({
+          name: formData.name,
+          phone_number: formData.phoneNumber,
+          service_type_id: formData.serviceTypeId,
+          estimated_wait_time: selectedService.estimated_time,
+          status: 'waiting'
+        })
+        .select('*, service_types(name)')
+        .single();
+      
+      if (error) throw error;
+      
+      // Navigate to status page
+      navigate(`/queue-status/${data.ticket_number}`, {
         state: {
           queueData: {
-            ticketNumber,
-            name: formData.name,
-            phoneNumber: formData.phoneNumber,
-            serviceType: SERVICE_TYPES.find(s => s.id.toString() === formData.serviceTypeId)?.name,
-            registeredAt: new Date().toISOString(),
-            estimatedWaitTime: SERVICE_TYPES.find(s => s.id.toString() === formData.serviceTypeId)?.estimatedTime || 15,
-            position: Math.floor(1 + Math.random() * 5), // Random position for demo
-            status: "waiting"
+            ticketNumber: data.ticket_number,
+            name: data.name,
+            phoneNumber: data.phone_number,
+            serviceType: data.service_types.name,
+            registeredAt: data.registered_at,
+            estimatedWaitTime: data.estimated_wait_time,
+            position: 1, // This is a simplification - would need queue position algorithm in real app
+            status: data.status
           }
         }
       });
 
       toast.success("Queue registration successful!");
     } catch (error) {
-      toast.error("Failed to register. Please try again.");
       console.error("Registration error:", error);
+      toast.error("Failed to register. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -126,9 +160,9 @@ export const QueueRegistration: React.FC = () => {
                 <SelectValue placeholder="Select service type" />
               </SelectTrigger>
               <SelectContent>
-                {SERVICE_TYPES.map((service) => (
-                  <SelectItem key={service.id} value={service.id.toString()}>
-                    {service.name} (~{service.estimatedTime} min)
+                {serviceTypes.map((service) => (
+                  <SelectItem key={service.id} value={service.id}>
+                    {service.name} (~{service.estimated_time} min)
                   </SelectItem>
                 ))}
               </SelectContent>

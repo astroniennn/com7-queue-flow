@@ -16,49 +16,17 @@ import {
   Search,
   RefreshCw
 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 type Customer = {
   id: string;
-  ticketNumber: number;
+  ticket_number: number;
   name: string;
-  phoneNumber: string;
-  serviceType: string;
-  registeredAt: string;
-  estimatedWaitTime: number;
+  phone_number: string;
+  service_type: string;
+  registered_at: string;
+  estimated_wait_time: number;
   status: "waiting" | "serving" | "completed" | "cancelled" | "skipped";
-};
-
-const generateMockCustomers = (): Customer[] => {
-  const statuses: Array<"waiting" | "serving" | "completed" | "cancelled" | "skipped"> = [
-    "waiting", "waiting", "waiting", "waiting", "waiting", 
-    "serving", "serving", 
-    "completed", "completed", "completed", 
-    "cancelled", "skipped"
-  ];
-  
-  const serviceTypes = [
-    "Product Inquiry", 
-    "Technical Support", 
-    "Returns & Exchanges", 
-    "Warranty Claims", 
-    "Billing Issues"
-  ];
-
-  return Array.from({ length: 12 }, (_, i) => {
-    const now = new Date();
-    const registeredAt = new Date(now.setHours(now.getHours() - Math.floor(Math.random() * 4)));
-    
-    return {
-      id: `cust-${i + 1}`,
-      ticketNumber: 10001 + i,
-      name: `Customer ${i + 1}`,
-      phoneNumber: `123-456-${7000 + i}`,
-      serviceType: serviceTypes[Math.floor(Math.random() * serviceTypes.length)],
-      registeredAt: registeredAt.toISOString(),
-      estimatedWaitTime: 10 + Math.floor(Math.random() * 20),
-      status: statuses[i]
-    };
-  });
 };
 
 export const QueueDashboard: React.FC = () => {
@@ -67,68 +35,161 @@ export const QueueDashboard: React.FC = () => {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [searchQuery, setSearchQuery] = useState<string>("");
   
+  const fetchQueueData = async () => {
+    setIsLoading(true);
+    try {
+      // Fetch queue data with service type name joined
+      const { data: queueData, error: queueError } = await supabase
+        .from('queue')
+        .select(`
+          id,
+          ticket_number,
+          name,
+          phone_number,
+          registered_at,
+          estimated_wait_time,
+          status,
+          completed_at,
+          service_types(name)
+        `)
+        .order('ticket_number', { ascending: true });
+
+      if (queueError) {
+        throw queueError;
+      }
+
+      // Transform the data to match our Customer type
+      const transformedData = queueData.map(item => ({
+        id: item.id,
+        ticket_number: item.ticket_number,
+        name: item.name,
+        phone_number: item.phone_number,
+        service_type: item.service_types.name,
+        registered_at: item.registered_at,
+        estimated_wait_time: item.estimated_wait_time,
+        status: item.status as "waiting" | "serving" | "completed" | "cancelled" | "skipped"
+      }));
+
+      setCustomers(transformedData);
+    } catch (error) {
+      console.error("Error fetching queue data:", error);
+      toast.error("Failed to load queue data");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
   useEffect(() => {
-    // In a real application, this would be an API call
-    const loadData = () => {
-      setIsLoading(true);
-      setTimeout(() => {
-        setCustomers(generateMockCustomers());
-        setIsLoading(false);
-      }, 1000);
+    fetchQueueData();
+    
+    // Set up real-time subscription for queue updates
+    const queueSubscription = supabase
+      .channel('public:queue')
+      .on('postgres_changes', { 
+        event: '*', 
+        schema: 'public', 
+        table: 'queue' 
+      }, () => {
+        fetchQueueData();
+      })
+      .subscribe();
+    
+    return () => {
+      supabase.removeChannel(queueSubscription);
     };
-    
-    loadData();
-    
-    // Set up auto-refresh (every 30 seconds in a real app)
-    const interval = setInterval(loadData, 30000);
-    
-    return () => clearInterval(interval);
   }, []);
   
-  const handleCallNext = (customer: Customer) => {
-    setCustomers(prev => 
-      prev.map(c => c.id === customer.id ? { ...c, status: "serving" } : c)
-    );
-    toast.success(`Now serving ${customer.name}`);
-    
-    // In a real app, this would notify the customer that it's their turn
+  const handleCallNext = async (customer: Customer) => {
+    try {
+      const { error } = await supabase
+        .from('queue')
+        .update({ status: 'serving' })
+        .eq('id', customer.id);
+      
+      if (error) throw error;
+      
+      toast.success(`Now serving ${customer.name}`);
+      fetchQueueData();
+    } catch (error) {
+      console.error("Error updating customer status:", error);
+      toast.error("Failed to update customer status");
+    }
   };
   
-  const handleStartService = (customer: Customer) => {
-    setCustomers(prev => 
-      prev.map(c => c.id === customer.id ? { ...c, status: "serving" } : c)
-    );
-    toast.success(`Service started for ${customer.name}`);
+  const handleStartService = async (customer: Customer) => {
+    try {
+      const { error } = await supabase
+        .from('queue')
+        .update({ status: 'serving' })
+        .eq('id', customer.id);
+      
+      if (error) throw error;
+      
+      toast.success(`Service started for ${customer.name}`);
+      fetchQueueData();
+    } catch (error) {
+      console.error("Error updating customer status:", error);
+      toast.error("Failed to update customer status");
+    }
   };
   
-  const handleCompleteService = (customer: Customer) => {
-    setCustomers(prev => 
-      prev.map(c => c.id === customer.id ? { ...c, status: "completed" } : c)
-    );
-    toast.success(`Service completed for ${customer.name}`);
+  const handleCompleteService = async (customer: Customer) => {
+    try {
+      const { error } = await supabase
+        .from('queue')
+        .update({ 
+          status: 'completed',
+          completed_at: new Date().toISOString()
+        })
+        .eq('id', customer.id);
+      
+      if (error) throw error;
+      
+      toast.success(`Service completed for ${customer.name}`);
+      fetchQueueData();
+    } catch (error) {
+      console.error("Error completing service:", error);
+      toast.error("Failed to complete service");
+    }
   };
   
-  const handleSkipCustomer = (customer: Customer) => {
-    setCustomers(prev => 
-      prev.map(c => c.id === customer.id ? { ...c, status: "skipped" } : c)
-    );
-    toast.info(`${customer.name} has been skipped`);
+  const handleSkipCustomer = async (customer: Customer) => {
+    try {
+      const { error } = await supabase
+        .from('queue')
+        .update({ status: 'skipped' })
+        .eq('id', customer.id);
+      
+      if (error) throw error;
+      
+      toast.info(`${customer.name} has been skipped`);
+      fetchQueueData();
+    } catch (error) {
+      console.error("Error skipping customer:", error);
+      toast.error("Failed to skip customer");
+    }
   };
   
-  const handleCancelService = (customer: Customer) => {
-    setCustomers(prev => 
-      prev.map(c => c.id === customer.id ? { ...c, status: "cancelled" } : c)
-    );
-    toast.info(`Service cancelled for ${customer.name}`);
+  const handleCancelService = async (customer: Customer) => {
+    try {
+      const { error } = await supabase
+        .from('queue')
+        .update({ status: 'cancelled' })
+        .eq('id', customer.id);
+      
+      if (error) throw error;
+      
+      toast.info(`Service cancelled for ${customer.name}`);
+      fetchQueueData();
+    } catch (error) {
+      console.error("Error cancelling service:", error);
+      toast.error("Failed to cancel service");
+    }
   };
   
   const handleRefresh = () => {
-    setIsLoading(true);
-    setTimeout(() => {
-      setCustomers(generateMockCustomers());
-      setIsLoading(false);
-      toast.success("Queue data refreshed");
-    }, 1000);
+    fetchQueueData();
+    toast.success("Queue data refreshed");
   };
   
   const getStatusBadge = (status: string) => {
@@ -154,8 +215,8 @@ export const QueueDashboard: React.FC = () => {
     const query = searchQuery.toLowerCase();
     return (
       customer.name.toLowerCase().includes(query) ||
-      customer.phoneNumber.includes(query) ||
-      customer.ticketNumber.toString().includes(query)
+      customer.phone_number.includes(query) ||
+      customer.ticket_number.toString().includes(query)
     );
   });
   

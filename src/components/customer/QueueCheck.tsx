@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Search } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 export const QueueCheck: React.FC = () => {
   const navigate = useNavigate();
@@ -25,35 +26,67 @@ export const QueueCheck: React.FC = () => {
     setLoading(true);
 
     try {
-      // In a real application, this would be an API call to check the queue status
-      // Simulating API call with timeout
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      // Mock response for demonstration
-      if (phoneNumber || ticketNumber) {
-        // Generate mock data for demonstration
-        const mockTicketNumber = ticketNumber || Math.floor(10000 + Math.random() * 90000);
+      let query = supabase
+        .from('queue')
+        .select(`
+          ticket_number,
+          name,
+          phone_number,
+          registered_at,
+          estimated_wait_time,
+          status,
+          service_types(name)
+        `);
+      
+      // Apply filter based on input
+      if (ticketNumber) {
+        query = query.eq('ticket_number', parseInt(ticketNumber));
+      } else if (phoneNumber) {
+        query = query.eq('phone_number', phoneNumber);
+      }
+      
+      const { data, error } = await query.single();
+      
+      if (error) {
+        if (error.code === 'PGRST116') {
+          toast.error("No queue record found with the provided information");
+        } else {
+          throw error;
+        }
+        return;
+      }
+      
+      if (data) {
+        // Calculate position based on waiting tickets with lower numbers
+        const { data: waitingBefore, error: countError } = await supabase
+          .from('queue')
+          .select('ticket_number', { count: 'exact' })
+          .eq('status', 'waiting')
+          .lt('ticket_number', data.ticket_number);
         
-        navigate(`/queue-status/${mockTicketNumber}`, {
+        if (countError) throw countError;
+        
+        const position = (waitingBefore?.length || 0) + 1;
+        
+        // Navigate to status page with the found data
+        navigate(`/queue-status/${data.ticket_number}`, {
           state: {
             queueData: {
-              ticketNumber: parseInt(mockTicketNumber.toString()),
-              name: "John Doe",  // In a real app, this would come from the backend
-              phoneNumber: phoneNumber || "123-456-7890",
-              serviceType: "Technical Support",
-              registeredAt: new Date().toISOString(),
-              estimatedWaitTime: 15,
-              position: 3,
-              status: "waiting"
+              ticketNumber: data.ticket_number,
+              name: data.name,
+              phoneNumber: data.phone_number,
+              serviceType: data.service_types.name,
+              registeredAt: data.registered_at,
+              estimatedWaitTime: data.estimated_wait_time,
+              position: position,
+              status: data.status
             }
           }
         });
-      } else {
-        toast.error("No queue record found with the provided information");
       }
     } catch (error) {
-      toast.error("Failed to check queue status. Please try again.");
       console.error("Queue check error:", error);
+      toast.error("Failed to check queue status. Please try again.");
     } finally {
       setLoading(false);
     }

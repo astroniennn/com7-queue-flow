@@ -9,7 +9,71 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      queue: {
+        Row: {
+          completed_at: string | null
+          estimated_wait_time: number
+          id: string
+          name: string
+          phone_number: string
+          registered_at: string
+          service_type_id: string
+          status: string
+          ticket_number: number
+        }
+        Insert: {
+          completed_at?: string | null
+          estimated_wait_time: number
+          id?: string
+          name: string
+          phone_number: string
+          registered_at?: string
+          service_type_id: string
+          status: string
+          ticket_number?: number
+        }
+        Update: {
+          completed_at?: string | null
+          estimated_wait_time?: number
+          id?: string
+          name?: string
+          phone_number?: string
+          registered_at?: string
+          service_type_id?: string
+          status?: string
+          ticket_number?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "queue_service_type_id_fkey"
+            columns: ["service_type_id"]
+            isOneToOne: false
+            referencedRelation: "service_types"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      service_types: {
+        Row: {
+          created_at: string
+          estimated_time: number
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          estimated_time: number
+          id?: string
+          name: string
+        }
+        Update: {
+          created_at?: string
+          estimated_time?: number
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

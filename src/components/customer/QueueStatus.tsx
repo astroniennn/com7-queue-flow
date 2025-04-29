@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
 import { Clock, Users, Calendar, Info } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 type QueueStatusProps = {
   queueData: {
@@ -16,7 +17,7 @@ type QueueStatusProps = {
     registeredAt: string;
     estimatedWaitTime: number;
     position: number;
-    status: "waiting" | "almost" | "serving" | "completed" | "cancelled";
+    status: "waiting" | "almost" | "serving" | "completed" | "cancelled" | "skipped";
   };
 };
 
@@ -52,6 +53,12 @@ const getStatusInfo = (status: string) => {
         description: "Your queue position has been cancelled.",
         color: "bg-red-500"
       };
+    case "skipped":
+      return {
+        title: "Skipped",
+        description: "Your turn was skipped. Please check with our staff.",
+        color: "bg-purple-500"
+      };
     default:
       return {
         title: "Unknown Status",
@@ -65,16 +72,85 @@ export const QueueStatus: React.FC<QueueStatusProps> = ({ queueData }) => {
   const navigate = useNavigate();
   const [remainingTime, setRemainingTime] = useState<number>(queueData.estimatedWaitTime * queueData.position);
   const [elapsedPercent, setElapsedPercent] = useState<number>(0);
+  const [refreshedData, setRefreshedData] = useState(queueData);
   
-  const statusInfo = getStatusInfo(queueData.status);
-  const registrationTime = new Date(queueData.registeredAt).toLocaleTimeString();
-  const registrationDate = new Date(queueData.registeredAt).toLocaleDateString();
-  
-  // For demonstration purposes - simulate time passing
+  // Real-time updates
   useEffect(() => {
-    if (queueData.status !== "waiting") return;
+    const fetchQueueStatus = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('queue')
+          .select(`
+            ticket_number,
+            name,
+            phone_number,
+            registered_at,
+            estimated_wait_time,
+            status,
+            service_types(name)
+          `)
+          .eq('ticket_number', queueData.ticketNumber)
+          .single();
+        
+        if (error) throw error;
+        
+        if (data) {
+          // Calculate position based on waiting tickets with lower numbers
+          const { data: waitingBefore, error: countError } = await supabase
+            .from('queue')
+            .select('ticket_number', { count: 'exact' })
+            .eq('status', 'waiting')
+            .lt('ticket_number', data.ticket_number);
+          
+          if (countError) throw countError;
+          
+          const position = (waitingBefore?.length || 0) + 1;
+          
+          setRefreshedData({
+            ticketNumber: data.ticket_number,
+            name: data.name,
+            phoneNumber: data.phone_number,
+            serviceType: data.service_types.name,
+            registeredAt: data.registered_at,
+            estimatedWaitTime: data.estimated_wait_time,
+            position: position,
+            status: data.status
+          });
+        }
+      } catch (error) {
+        console.error("Error fetching queue status:", error);
+      }
+    };
+
+    fetchQueueStatus();
     
-    const totalWaitTime = queueData.estimatedWaitTime * queueData.position;
+    // Set up real-time subscription for this specific queue record
+    const queueSubscription = supabase
+      .channel(`queue_${queueData.ticketNumber}`)
+      .on('postgres_changes', { 
+        event: 'UPDATE', 
+        schema: 'public', 
+        table: 'queue',
+        filter: `ticket_number=eq.${queueData.ticketNumber}`
+      }, () => {
+        fetchQueueStatus();
+      })
+      .subscribe();
+    
+    return () => {
+      supabase.removeChannel(queueSubscription);
+    };
+  }, [queueData.ticketNumber]);
+  
+  const statusInfo = getStatusInfo(refreshedData.status);
+  const registrationTime = new Date(refreshedData.registeredAt).toLocaleTimeString();
+  const registrationDate = new Date(refreshedData.registeredAt).toLocaleDateString();
+  
+  // For time calculation
+  useEffect(() => {
+    if (refreshedData.status !== "waiting") return;
+    
+    const totalWaitTime = refreshedData.estimatedWaitTime * refreshedData.position;
     setRemainingTime(totalWaitTime);
     
     const timer = setInterval(() => {
@@ -88,23 +164,35 @@ export const QueueStatus: React.FC<QueueStatusProps> = ({ queueData }) => {
     }, 60000); // Update every minute
     
     return () => clearInterval(timer);
-  }, [queueData.estimatedWaitTime, queueData.position, queueData.status]);
+  }, [refreshedData.estimatedWaitTime, refreshedData.position, refreshedData.status]);
   
   // Calculate progress percentage
   useEffect(() => {
-    const totalWaitTime = queueData.estimatedWaitTime * queueData.position;
+    const totalWaitTime = refreshedData.estimatedWaitTime * refreshedData.position;
     const elapsed = totalWaitTime - remainingTime;
     const percent = (elapsed / totalWaitTime) * 100;
     setElapsedPercent(Math.min(percent, 100));
-  }, [remainingTime, queueData.estimatedWaitTime, queueData.position]);
+  }, [remainingTime, refreshedData.estimatedWaitTime, refreshedData.position]);
   
-  const handleCancel = () => {
-    toast.success("Your queue position has been cancelled.");
-    navigate("/");
+  const handleCancel = async () => {
+    try {
+      const { error } = await supabase
+        .from('queue')
+        .update({ status: 'cancelled' })
+        .eq('ticket_number', refreshedData.ticketNumber);
+      
+      if (error) throw error;
+      
+      toast.success("Your queue position has been cancelled.");
+      navigate("/");
+    } catch (error) {
+      console.error("Error cancelling queue:", error);
+      toast.error("Failed to cancel. Please try again.");
+    }
   };
   
   const handleReschedule = () => {
-    navigate("/reschedule", { state: { queueData } });
+    navigate("/", { state: { reschedule: true } });
   };
 
   return (
@@ -122,11 +210,11 @@ export const QueueStatus: React.FC<QueueStatusProps> = ({ queueData }) => {
         <div className="flex justify-between items-center">
           <div className="text-center px-4 py-2 bg-com7-light-gray rounded-lg flex-1 mr-2">
             <div className="text-sm text-gray-500">Ticket #</div>
-            <div className="font-bold text-xl">{queueData.ticketNumber}</div>
+            <div className="font-bold text-xl">{refreshedData.ticketNumber}</div>
           </div>
           <div className="text-center px-4 py-2 bg-com7-light-gray rounded-lg flex-1 ml-2">
             <div className="text-sm text-gray-500">Position</div>
-            <div className="font-bold text-xl">{queueData.position}</div>
+            <div className="font-bold text-xl">{refreshedData.position}</div>
           </div>
         </div>
         
@@ -135,7 +223,7 @@ export const QueueStatus: React.FC<QueueStatusProps> = ({ queueData }) => {
             <Users className="h-5 w-5 text-com7-primary mr-2" />
             <div>
               <div className="text-sm text-gray-500">Name</div>
-              <div className="font-medium">{queueData.name}</div>
+              <div className="font-medium">{refreshedData.name}</div>
             </div>
           </div>
           
@@ -143,7 +231,7 @@ export const QueueStatus: React.FC<QueueStatusProps> = ({ queueData }) => {
             <Info className="h-5 w-5 text-com7-primary mr-2" />
             <div>
               <div className="text-sm text-gray-500">Service</div>
-              <div className="font-medium">{queueData.serviceType}</div>
+              <div className="font-medium">{refreshedData.serviceType}</div>
             </div>
           </div>
           
@@ -155,7 +243,7 @@ export const QueueStatus: React.FC<QueueStatusProps> = ({ queueData }) => {
             </div>
           </div>
           
-          {queueData.status === "waiting" && (
+          {refreshedData.status === "waiting" && (
             <div className="space-y-2">
               <div className="flex items-center">
                 <Clock className="h-5 w-5 text-com7-primary mr-2" />
@@ -176,7 +264,7 @@ export const QueueStatus: React.FC<QueueStatusProps> = ({ queueData }) => {
         </div>
       </CardContent>
       
-      {queueData.status === "waiting" && (
+      {refreshedData.status === "waiting" && (
         <CardFooter className="flex justify-between space-x-4">
           <Button
             variant="outline"
