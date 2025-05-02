@@ -1,16 +1,20 @@
+
 import React, { useState } from "react";
 import { NavLink } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { Calendar, Users, Settings, BarChart4, Clock, UserPlus, List } from "lucide-react";
+
 type SidebarProps = {
   userRole: "employee" | "admin";
 };
+
 type NavItem = {
   title: string;
   icon: React.ElementType;
   href: string;
   roles: Array<"employee" | "admin">;
 };
+
 const navItems: NavItem[] = [{
   title: "แดชบอร์ดคิว",
   icon: List,
@@ -47,19 +51,36 @@ const navItems: NavItem[] = [{
   href: "/settings",
   roles: ["admin"]
 }];
+
 export const Sidebar: React.FC<SidebarProps> = ({
   userRole
 }) => {
   const [collapsed, setCollapsed] = useState(false);
+  
   return <div className={cn("bg-com7-primary-dark text-white transition-all duration-300 flex flex-col h-full", collapsed ? "w-16" : "w-64")}>
       <div className="p-4 flex items-center justify-between border-b border-blue-600">
         <div className={cn("flex items-center", collapsed ? "justify-center w-full" : "")}>
-          {collapsed ? <span className="text-2xl font-bold">C7</span> : <div className="flex flex-col">
-              <span className="text-xl font-bold">Studio 7 westgate</span>
-              <span className="text-xs font-light text-blue-200">
-                {userRole === "admin" ? "ระบบผู้ดูแล" : "ระบบพนักงาน"}
-              </span>
-            </div>}
+          {collapsed ? (
+            <img 
+              src="/lovable-uploads/bb7a1797-5dca-4065-a245-f85472a93bf9.png" 
+              alt="Studio 7 Logo" 
+              className="h-8" 
+            />
+          ) : (
+            <div className="flex items-center space-x-2">
+              <img 
+                src="/lovable-uploads/bb7a1797-5dca-4065-a245-f85472a93bf9.png" 
+                alt="Studio 7 Logo" 
+                className="h-10" 
+              />
+              <div className="flex flex-col">
+                <span className="text-xl font-bold">Studio 7 westgate</span>
+                <span className="text-xs font-light text-blue-200">
+                  {userRole === "admin" ? "ระบบผู้ดูแล" : "ระบบพนักงาน"}
+                </span>
+              </div>
+            </div>
+          )}
         </div>
         <button onClick={() => setCollapsed(!collapsed)} className={collapsed ? "hidden" : "text-white hover:text-blue-200"}>
           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">

@@ -18,7 +18,7 @@ export const Header: React.FC<HeaderProps> = ({ userRole = "customer" }) => {
       case "admin":
         return "แผงควบคุมผู้ดูแลระบบ";
       default:
-        return "ยินดีต้อนรับสู่ Com7 QUEUE";
+        return "ยินดีต้อนรับสู่ Studio 7 QUEUE";
     }
   };
 
@@ -29,6 +29,13 @@ export const Header: React.FC<HeaderProps> = ({ userRole = "customer" }) => {
   return (
     <header className="bg-white border-b border-gray-200 px-4 py-3 flex justify-between items-center shadow-sm">
       <div className="flex items-center space-x-4">
+        {userRole === "customer" && (
+          <img 
+            src="/lovable-uploads/bb7a1797-5dca-4065-a245-f85472a93bf9.png" 
+            alt="Studio 7 Logo" 
+            className="h-8 mr-2" 
+          />
+        )}
         <h1 className="text-xl font-semibold text-gray-800">{getHeaderTitle()}</h1>
       </div>
 

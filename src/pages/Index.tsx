@@ -1,17 +1,27 @@
+
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { QueueRegistration } from "@/components/customer/QueueRegistration";
 import { QueueCheck } from "@/components/customer/QueueCheck";
+
 const Index: React.FC = () => {
   const [activeTab, setActiveTab] = useState<string>("join-queue");
+  
   return <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50">
       <div className="container px-4 py-12 mx-auto">
-        <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">
-            ยินดีต้อนรับสู่ <span className="text-green-600">Studio7 Central PlazaWestgate</span>
-          </h1>
-          <p className="text-xl text-gray-700 max-w-2xl mx-auto">ลงทะเบียนคิวออนไลน์และเราจะแจ้งเตือนเมื่อถึงคิวของคุณ</p>
+        <div className="text-center mb-8">
+          <div className="flex flex-col items-center justify-center mb-6">
+            <img 
+              src="/lovable-uploads/bb7a1797-5dca-4065-a245-f85472a93bf9.png" 
+              alt="Studio 7 Logo" 
+              className="h-32 mb-4" 
+            />
+            <h1 className="text-4xl font-bold text-gray-900 mb-4">
+              ยินดีต้อนรับสู่ <span className="text-green-600">Studio7 Central PlazaWestgate</span>
+            </h1>
+            <p className="text-xl text-gray-700 max-w-2xl mx-auto">ลงทะเบียนคิวออนไลน์และเราจะแจ้งเตือนเมื่อถึงคิวของคุณ</p>
+          </div>
         </div>
 
         <div className="max-w-md mx-auto">
