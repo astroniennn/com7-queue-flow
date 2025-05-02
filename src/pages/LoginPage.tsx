@@ -1,19 +1,29 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
+import { useAuth } from "@/contexts/AuthContext";
 
 const LoginPage: React.FC = () => {
   const navigate = useNavigate();
+  const { login, isAuthenticated } = useAuth();
+  
   const [formData, setFormData] = useState({
     username: "",
     password: "",
   });
   const [loading, setLoading] = useState(false);
+
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/dashboard');
+    }
+  }, [isAuthenticated, navigate]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -31,15 +41,9 @@ const LoginPage: React.FC = () => {
     setLoading(true);
 
     try {
-      // In a real application, this would be an API call
-      // Simulating API call with timeout
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      // For demo purposes, using hardcoded credentials
-      if (formData.username === "admin" && formData.password === "admin") {
-        toast.success("เข้าสู่ระบบสำเร็จ!");
-        navigate("/dashboard");
-      } else if (formData.username === "employee" && formData.password === "employee") {
+      const success = await login(formData.username, formData.password);
+      
+      if (success) {
         toast.success("เข้าสู่ระบบสำเร็จ!");
         navigate("/dashboard");
       } else {
@@ -119,8 +123,8 @@ const LoginPage: React.FC = () => {
               <div className="text-sm">
                 <span className="text-gray-600">สำหรับการสาธิต:</span>
                 <ul className="mt-2 space-y-1">
-                  <li><span className="font-semibold">ผู้ดูแลระบบ:</span> admin / admin</li>
-                  <li><span className="font-semibold">พนักงาน:</span> employee / employee</li>
+                  <li><span className="font-semibold">ผู้ดูแลระบบ:</span> admin / Apple645</li>
+                  <li><span className="font-semibold">พนักงาน:</span> user / Apple645</li>
                 </ul>
               </div>
             </div>

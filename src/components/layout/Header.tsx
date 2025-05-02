@@ -2,7 +2,8 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { Bell, User } from "lucide-react";
+import { Bell, User, LogOut } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 
 type HeaderProps = {
   userRole?: "customer" | "employee" | "admin";
@@ -10,6 +11,7 @@ type HeaderProps = {
 
 export const Header: React.FC<HeaderProps> = ({ userRole = "customer" }) => {
   const navigate = useNavigate();
+  const { user, logout } = useAuth();
 
   const getHeaderTitle = () => {
     switch (userRole) {
@@ -23,6 +25,11 @@ export const Header: React.FC<HeaderProps> = ({ userRole = "customer" }) => {
   };
 
   const handleLoginClick = () => {
+    navigate("/login");
+  };
+
+  const handleLogoutClick = () => {
+    logout();
     navigate("/login");
   };
 
@@ -52,8 +59,11 @@ export const Header: React.FC<HeaderProps> = ({ userRole = "customer" }) => {
                 <User className="h-5 w-5 text-white" />
               </div>
               <span className="text-sm font-medium hidden md:inline-block">
-                {userRole === "admin" ? "ผู้ดูแลระบบ" : "พนักงาน"}
+                {user?.username} ({userRole === "admin" ? "ผู้ดูแลระบบ" : "พนักงาน"})
               </span>
+              <Button variant="ghost" size="icon" onClick={handleLogoutClick} title="ออกจากระบบ">
+                <LogOut className="h-5 w-5" />
+              </Button>
             </div>
           </>
         ) : (
