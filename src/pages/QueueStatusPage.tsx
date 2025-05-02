@@ -6,6 +6,7 @@ import { QueueStatus } from "@/components/customer/QueueStatus";
 import { Layout } from "@/components/layout/Layout";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { AlertCircle, Bell } from "lucide-react";
 
 const QueueStatusPage: React.FC = () => {
   const location = useLocation();
@@ -81,6 +82,119 @@ const QueueStatusPage: React.FC = () => {
     
     fetchQueueData();
   }, [location.state, params.ticketId, navigate]);
+
+  // Set up real-time subscription for queue updates
+  useEffect(() => {
+    if (!queueData || !params.ticketId) return;
+    
+    // Set up real-time subscription for this specific ticket
+    const channel = supabase
+      .channel(`queue_updates_${params.ticketId}`)
+      .on(
+        'postgres_changes', 
+        { 
+          event: 'UPDATE', 
+          schema: 'public', 
+          table: 'queue',
+          filter: `ticket_number=eq.${params.ticketId}` 
+        }, 
+        (payload) => {
+          console.log("Queue status updated:", payload);
+          // Show notification based on status change
+          if (payload.new && payload.old && payload.new.status !== payload.old.status) {
+            if (payload.new.status === 'almost') {
+              toast(
+                <div className="flex items-center">
+                  <Bell className="mr-2 h-5 w-5 text-yellow-500" />
+                  <div>
+                    <div className="font-semibold">ใกล้ถึงคิวของคุณแล้ว</div>
+                    <div className="text-sm">กรุณามาที่พื้นที่รอเรียกคิว</div>
+                  </div>
+                </div>,
+                {
+                  duration: 10000,
+                }
+              );
+              // Play notification sound
+              const audio = new Audio('/notification.mp3');
+              audio.play().catch(e => console.log("Audio play error:", e));
+            } else if (payload.new.status === 'serving') {
+              toast(
+                <div className="flex items-center">
+                  <AlertCircle className="mr-2 h-5 w-5 text-red-500" />
+                  <div>
+                    <div className="font-semibold">ถึงคิวของคุณแล้ว!</div>
+                    <div className="text-sm">กรุณามาที่เคาน์เตอร์บริการทันที</div>
+                  </div>
+                </div>,
+                {
+                  duration: 0, // Won't auto-dismiss
+                }
+              );
+              // Play urgent notification sound
+              const audio = new Audio('/urgent-notification.mp3');
+              audio.play().catch(e => console.log("Audio play error:", e));
+            }
+          }
+          
+          // Refresh the queue data
+          const ticketId = parseInt(params.ticketId);
+          if (isNaN(ticketId)) return;
+          
+          // Update data without full page refresh
+          const fetchUpdatedData = async () => {
+            try {
+              const { data: updatedData, error } = await supabase
+                .from('queue')
+                .select(`
+                  ticket_number,
+                  name,
+                  phone_number,
+                  registered_at,
+                  estimated_wait_time,
+                  status,
+                  service_types(name)
+                `)
+                .eq('ticket_number', ticketId)
+                .single();
+              
+              if (error) throw error;
+              
+              // Calculate position based on waiting tickets with lower numbers
+              const { data: waitingBefore, error: countError } = await supabase
+                .from('queue')
+                .select('ticket_number', { count: 'exact' })
+                .eq('status', 'waiting')
+                .lt('ticket_number', updatedData.ticket_number);
+              
+              if (countError) throw countError;
+              
+              const position = (waitingBefore?.length || 0) + 1;
+              
+              setQueueData({
+                ticketNumber: updatedData.ticket_number,
+                name: updatedData.name,
+                phoneNumber: updatedData.phone_number,
+                serviceType: updatedData.service_types.name,
+                registeredAt: updatedData.registered_at,
+                estimatedWaitTime: updatedData.estimated_wait_time,
+                position: position,
+                status: updatedData.status as "waiting" | "almost" | "serving" | "completed" | "cancelled" | "skipped"
+              });
+            } catch (error) {
+              console.error("Error fetching updated queue data:", error);
+            }
+          };
+          
+          fetchUpdatedData();
+        }
+      )
+      .subscribe();
+    
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [queueData, params.ticketId]);
 
   if (loading) {
     return (
