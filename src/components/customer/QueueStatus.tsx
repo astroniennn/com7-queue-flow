@@ -19,6 +19,7 @@ type QueueStatusProps = {
     position: number;
     status: "waiting" | "almost" | "serving" | "completed" | "cancelled" | "skipped";
   };
+  updateQueueData: (updatedData: any) => void;
 };
 
 const getStatusInfo = (status: string) => {
@@ -68,7 +69,7 @@ const getStatusInfo = (status: string) => {
   }
 };
 
-export const QueueStatus: React.FC<QueueStatusProps> = ({ queueData }) => {
+export const QueueStatus: React.FC<QueueStatusProps> = ({ queueData, updateQueueData }) => {
   const navigate = useNavigate();
   const [remainingTime, setRemainingTime] = useState<number>(queueData.estimatedWaitTime * queueData.position);
   const [elapsedPercent, setElapsedPercent] = useState<number>(0);
@@ -109,6 +110,12 @@ export const QueueStatus: React.FC<QueueStatusProps> = ({ queueData }) => {
         .eq('ticket_number', queueData.ticketNumber);
       
       if (error) throw error;
+      
+      // Update local queue data
+      updateQueueData({
+        ...queueData,
+        status: 'cancelled'
+      });
       
       toast.success("ยกเลิกคิวเรียบร้อยแล้ว");
       navigate("/");

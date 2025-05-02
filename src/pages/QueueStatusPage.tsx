@@ -83,35 +83,56 @@ const QueueStatusPage: React.FC = () => {
     fetchQueueData();
   }, [location.state, params.ticketId, navigate]);
 
+  // Update queue data function to be passed to QueueStatus component
+  const updateQueueData = (updatedData: any) => {
+    console.log("Updating queue data with:", updatedData);
+    setQueueData(updatedData);
+  };
+
   // Set up real-time subscription for queue updates
   useEffect(() => {
     if (!queueData || !params.ticketId) return;
-    
-    console.log("Setting up real-time subscription for ticket:", params.ticketId);
     
     const ticketId = parseInt(params.ticketId);
     if (isNaN(ticketId)) {
       console.error("Invalid ticket ID for subscription:", params.ticketId);
       return;
     }
-
-    // Set up real-time subscription for this specific ticket
-    const channel = supabase
-      .channel(`queue_updates_${ticketId}`)
+    
+    console.log("Setting up realtime subscription for ticket:", ticketId);
+    
+    // First, enable replication for the queue table
+    const setupReplication = async () => {
+      try {
+        await supabase.rpc('alter_table_replica_identity_full', { table_name: 'queue' });
+        console.log("Replication identity set successfully");
+      } catch (error) {
+        console.log("Replication setup error (can be ignored if already set):", error);
+      }
+    };
+    
+    setupReplication();
+    
+    // Setup direct channel for this specific ticket
+    const specificTicketChannel = supabase
+      .channel(`specific_ticket_${ticketId}`)
       .on(
-        'postgres_changes', 
-        { 
-          event: 'UPDATE', 
-          schema: 'public', 
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
           table: 'queue',
-          filter: `ticket_number=eq.${ticketId}` 
-        }, 
-        async (payload) => {
-          console.log("Queue status updated:", payload);
+          filter: `ticket_number=eq.${ticketId}`
+        },
+        (payload) => {
+          console.log("Queue update received:", payload);
           
-          // Show notification based on status change
+          // Get the updated status from the payload
           if (payload.new && payload.old && payload.new.status !== payload.old.status) {
-            if (payload.new.status === 'almost') {
+            const newStatus = payload.new.status as "waiting" | "almost" | "serving" | "completed" | "cancelled" | "skipped";
+            
+            // Show notifications based on status change
+            if (newStatus === 'almost') {
               toast(
                 <div className="flex items-center">
                   <Bell className="mr-2 h-5 w-5 text-yellow-500" />
@@ -120,14 +141,12 @@ const QueueStatusPage: React.FC = () => {
                     <div className="text-sm">กรุณามาที่พื้นที่รอเรียกคิว</div>
                   </div>
                 </div>,
-                {
-                  duration: 10000,
-                }
+                { duration: 10000 }
               );
               // Play notification sound
               const audio = new Audio('/notification.mp3');
               audio.play().catch(e => console.log("Audio play error:", e));
-            } else if (payload.new.status === 'serving') {
+            } else if (newStatus === 'serving') {
               toast(
                 <div className="flex items-center">
                   <AlertCircle className="mr-2 h-5 w-5 text-red-500" />
@@ -136,75 +155,55 @@ const QueueStatusPage: React.FC = () => {
                     <div className="text-sm">กรุณามาที่เคาน์เตอร์บริการทันที</div>
                   </div>
                 </div>,
-                {
-                  duration: 0, // Won't auto-dismiss
-                }
+                { duration: 0 } // Won't auto-dismiss
               );
               // Play urgent notification sound
               const audio = new Audio('/urgent-notification.mp3');
               audio.play().catch(e => console.log("Audio play error:", e));
             }
-          }
-          
-          // Update data without full page refresh
-          try {
-            const { data: updatedData, error } = await supabase
-              .from('queue')
-              .select(`
-                ticket_number,
-                name,
-                phone_number,
-                registered_at,
-                estimated_wait_time,
-                status,
-                service_types(name)
-              `)
-              .eq('ticket_number', ticketId)
-              .single();
             
-            if (error) throw error;
-            
-            // Calculate position based on waiting tickets with lower numbers
-            const { data: waitingBefore, error: countError } = await supabase
-              .from('queue')
-              .select('ticket_number', { count: 'exact' })
-              .eq('status', 'waiting')
-              .lt('ticket_number', updatedData.ticket_number);
-            
-            if (countError) throw countError;
-            
-            const position = (waitingBefore?.length || 0) + 1;
-            
-            console.log("Updating queue data:", {
-              ticketNumber: updatedData.ticket_number,
-              status: updatedData.status,
-              position: position
+            // Update the queueData with the new status
+            updateQueueData({
+              ...queueData,
+              status: newStatus
             });
             
-            setQueueData({
-              ticketNumber: updatedData.ticket_number,
-              name: updatedData.name,
-              phoneNumber: updatedData.phone_number,
-              serviceType: updatedData.service_types.name,
-              registeredAt: updatedData.registered_at,
-              estimatedWaitTime: updatedData.estimated_wait_time,
-              position: position,
-              status: updatedData.status as "waiting" | "almost" | "serving" | "completed" | "cancelled" | "skipped"
-            });
-          } catch (error) {
-            console.error("Error fetching updated queue data:", error);
+            // Fetch updated position if needed
+            if (newStatus === 'waiting') {
+              const fetchUpdatedPosition = async () => {
+                try {
+                  const { data: waitingBefore, error } = await supabase
+                    .from('queue')
+                    .select('ticket_number', { count: 'exact' })
+                    .eq('status', 'waiting')
+                    .lt('ticket_number', ticketId);
+                  
+                  if (!error) {
+                    const position = (waitingBefore?.length || 0) + 1;
+                    updateQueueData({
+                      ...queueData,
+                      status: newStatus,
+                      position: position
+                    });
+                  }
+                } catch (error) {
+                  console.error("Error fetching updated position:", error);
+                }
+              };
+              fetchUpdatedPosition();
+            }
           }
         }
       )
       .subscribe((status) => {
-        console.log("Subscription status for queue updates:", status);
+        console.log("Subscription status:", status);
       });
     
     return () => {
       console.log("Removing channel subscription");
-      supabase.removeChannel(channel);
+      supabase.removeChannel(specificTicketChannel);
     };
-  }, [params.ticketId]);  // Removed queueData dependency to prevent resubscription
+  }, [params.ticketId, queueData]);
 
   if (loading) {
     return (
@@ -255,7 +254,7 @@ const QueueStatusPage: React.FC = () => {
               </Button>
             </div>
             
-            <QueueStatus queueData={queueData} />
+            <QueueStatus queueData={queueData} updateQueueData={updateQueueData} />
           </div>
         </div>
       </div>
