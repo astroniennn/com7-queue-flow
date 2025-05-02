@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { useLocation, useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -87,9 +86,11 @@ const QueueStatusPage: React.FC = () => {
   useEffect(() => {
     if (!queueData || !params.ticketId) return;
     
+    console.log("Setting up real-time subscription for ticket:", params.ticketId);
+    
     // Set up real-time subscription for this specific ticket
     const channel = supabase
-      .channel(`queue_updates_${params.ticketId}`)
+      .channel(`public:queue:ticket_number=eq.${params.ticketId}`)
       .on(
         'postgres_changes', 
         { 
@@ -189,9 +190,12 @@ const QueueStatusPage: React.FC = () => {
           fetchUpdatedData();
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log("Subscription status:", status);
+      });
     
     return () => {
+      console.log("Removing channel subscription");
       supabase.removeChannel(channel);
     };
   }, [queueData, params.ticketId]);
