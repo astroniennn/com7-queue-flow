@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -7,14 +6,15 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
-
 const LoginPage: React.FC = () => {
   const navigate = useNavigate();
-  const { login, isAuthenticated } = useAuth();
-  
+  const {
+    login,
+    isAuthenticated
+  } = useAuth();
   const [formData, setFormData] = useState({
     username: "",
-    password: "",
+    password: ""
   });
   const [loading, setLoading] = useState(false);
 
@@ -24,25 +24,25 @@ const LoginPage: React.FC = () => {
       navigate('/dashboard');
     }
   }, [isAuthenticated, navigate]);
-
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    const {
+      name,
+      value
+    } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
   };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
     if (!formData.username || !formData.password) {
       toast.error("กรุณากรอกชื่อผู้ใช้และรหัสผ่าน");
       return;
     }
-
     setLoading(true);
-
     try {
       const success = await login(formData.username, formData.password);
-      
       if (success) {
         toast.success("เข้าสู่ระบบสำเร็จ!");
         navigate("/dashboard");
@@ -56,9 +56,7 @@ const LoginPage: React.FC = () => {
       setLoading(false);
     }
   };
-
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-50 px-4">
+  return <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-50 px-4">
       <div className="max-w-md w-full">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-gray-900">
@@ -80,14 +78,7 @@ const LoginPage: React.FC = () => {
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="username">ชื่อผู้ใช้</Label>
-                <Input
-                  id="username"
-                  name="username"
-                  placeholder="กรอกชื่อผู้ใช้ของคุณ"
-                  value={formData.username}
-                  onChange={handleInputChange}
-                  required
-                />
+                <Input id="username" name="username" placeholder="กรอกชื่อผู้ใช้ของคุณ" value={formData.username} onChange={handleInputChange} required />
               </div>
 
               <div className="space-y-2">
@@ -97,23 +88,11 @@ const LoginPage: React.FC = () => {
                     ลืมรหัสผ่าน?
                   </Button>
                 </div>
-                <Input
-                  id="password"
-                  name="password"
-                  type="password"
-                  placeholder="กรอกรหัสผ่านของคุณ"
-                  value={formData.password}
-                  onChange={handleInputChange}
-                  required
-                />
+                <Input id="password" name="password" type="password" placeholder="กรอกรหัสผ่านของคุณ" value={formData.password} onChange={handleInputChange} required />
               </div>
 
               <CardFooter className="px-0 pt-4">
-                <Button
-                  type="submit"
-                  className="w-full bg-com7-primary hover:bg-com7-primary-dark"
-                  disabled={loading}
-                >
+                <Button type="submit" className="w-full bg-com7-primary hover:bg-com7-primary-dark" disabled={loading}>
                   {loading ? "กำลังเข้าสู่ระบบ..." : "เข้าสู่ระบบ"}
                 </Button>
               </CardFooter>
@@ -121,10 +100,10 @@ const LoginPage: React.FC = () => {
             
             <div className="mt-6 text-center">
               <div className="text-sm">
-                <span className="text-gray-600">สำหรับการสาธิต:</span>
+                
                 <ul className="mt-2 space-y-1">
-                  <li><span className="font-semibold">ผู้ดูแลระบบ:</span> admin / Apple645</li>
-                  <li><span className="font-semibold">พนักงาน:</span> user / Apple645</li>
+                  
+                  
                 </ul>
               </div>
             </div>
@@ -137,8 +116,6 @@ const LoginPage: React.FC = () => {
           </Button>
         </div>
       </div>
-    </div>
-  );
+    </div>;
 };
-
 export default LoginPage;
