@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from "react";
 import { useLocation, useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -88,19 +89,26 @@ const QueueStatusPage: React.FC = () => {
     
     console.log("Setting up real-time subscription for ticket:", params.ticketId);
     
+    const ticketId = parseInt(params.ticketId);
+    if (isNaN(ticketId)) {
+      console.error("Invalid ticket ID for subscription:", params.ticketId);
+      return;
+    }
+
     // Set up real-time subscription for this specific ticket
     const channel = supabase
-      .channel(`public:queue:ticket_number=eq.${params.ticketId}`)
+      .channel(`queue_updates_${ticketId}`)
       .on(
         'postgres_changes', 
         { 
           event: 'UPDATE', 
           schema: 'public', 
           table: 'queue',
-          filter: `ticket_number=eq.${params.ticketId}` 
+          filter: `ticket_number=eq.${ticketId}` 
         }, 
-        (payload) => {
+        async (payload) => {
           console.log("Queue status updated:", payload);
+          
           // Show notification based on status change
           if (payload.new && payload.old && payload.new.status !== payload.old.status) {
             if (payload.new.status === 'almost') {
@@ -138,67 +146,65 @@ const QueueStatusPage: React.FC = () => {
             }
           }
           
-          // Refresh the queue data
-          const ticketId = parseInt(params.ticketId);
-          if (isNaN(ticketId)) return;
-          
           // Update data without full page refresh
-          const fetchUpdatedData = async () => {
-            try {
-              const { data: updatedData, error } = await supabase
-                .from('queue')
-                .select(`
-                  ticket_number,
-                  name,
-                  phone_number,
-                  registered_at,
-                  estimated_wait_time,
-                  status,
-                  service_types(name)
-                `)
-                .eq('ticket_number', ticketId)
-                .single();
-              
-              if (error) throw error;
-              
-              // Calculate position based on waiting tickets with lower numbers
-              const { data: waitingBefore, error: countError } = await supabase
-                .from('queue')
-                .select('ticket_number', { count: 'exact' })
-                .eq('status', 'waiting')
-                .lt('ticket_number', updatedData.ticket_number);
-              
-              if (countError) throw countError;
-              
-              const position = (waitingBefore?.length || 0) + 1;
-              
-              setQueueData({
-                ticketNumber: updatedData.ticket_number,
-                name: updatedData.name,
-                phoneNumber: updatedData.phone_number,
-                serviceType: updatedData.service_types.name,
-                registeredAt: updatedData.registered_at,
-                estimatedWaitTime: updatedData.estimated_wait_time,
-                position: position,
-                status: updatedData.status as "waiting" | "almost" | "serving" | "completed" | "cancelled" | "skipped"
-              });
-            } catch (error) {
-              console.error("Error fetching updated queue data:", error);
-            }
-          };
-          
-          fetchUpdatedData();
+          try {
+            const { data: updatedData, error } = await supabase
+              .from('queue')
+              .select(`
+                ticket_number,
+                name,
+                phone_number,
+                registered_at,
+                estimated_wait_time,
+                status,
+                service_types(name)
+              `)
+              .eq('ticket_number', ticketId)
+              .single();
+            
+            if (error) throw error;
+            
+            // Calculate position based on waiting tickets with lower numbers
+            const { data: waitingBefore, error: countError } = await supabase
+              .from('queue')
+              .select('ticket_number', { count: 'exact' })
+              .eq('status', 'waiting')
+              .lt('ticket_number', updatedData.ticket_number);
+            
+            if (countError) throw countError;
+            
+            const position = (waitingBefore?.length || 0) + 1;
+            
+            console.log("Updating queue data:", {
+              ticketNumber: updatedData.ticket_number,
+              status: updatedData.status,
+              position: position
+            });
+            
+            setQueueData({
+              ticketNumber: updatedData.ticket_number,
+              name: updatedData.name,
+              phoneNumber: updatedData.phone_number,
+              serviceType: updatedData.service_types.name,
+              registeredAt: updatedData.registered_at,
+              estimatedWaitTime: updatedData.estimated_wait_time,
+              position: position,
+              status: updatedData.status as "waiting" | "almost" | "serving" | "completed" | "cancelled" | "skipped"
+            });
+          } catch (error) {
+            console.error("Error fetching updated queue data:", error);
+          }
         }
       )
       .subscribe((status) => {
-        console.log("Subscription status:", status);
+        console.log("Subscription status for queue updates:", status);
       });
     
     return () => {
       console.log("Removing channel subscription");
       supabase.removeChannel(channel);
     };
-  }, [queueData, params.ticketId]);
+  }, [params.ticketId]);  // Removed queueData dependency to prevent resubscription
 
   if (loading) {
     return (
