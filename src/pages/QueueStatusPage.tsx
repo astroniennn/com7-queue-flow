@@ -6,35 +6,9 @@ import { QueueStatus } from "@/components/customer/QueueStatus";
 import { Layout } from "@/components/layout/Layout";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { AlertCircle, Bell } from "lucide-react";
-
-// Define proper types for Supabase realtime payload
-interface SupabaseRealtimePayload {
-  eventType: string;
-  new: {
-    status: "waiting" | "almost" | "serving" | "completed" | "cancelled" | "skipped";
-    ticket_number: number;
-    [key: string]: any;
-  };
-  old: {
-    status: "waiting" | "almost" | "serving" | "completed" | "cancelled" | "skipped";
-    ticket_number: number;
-    [key: string]: any;
-  };
-  [key: string]: any;
-}
-
-// Define the proper Queue Data type
-interface QueueData {
-  ticketNumber: number;
-  name: string;
-  phoneNumber: string;
-  serviceType: string;
-  registeredAt: string;
-  estimatedWaitTime: number;
-  position: number;
-  status: "waiting" | "almost" | "serving" | "completed" | "cancelled" | "skipped";
-}
+import { QueueLoader } from "@/components/customer/queue/QueueLoader";
+import { QueueNotFound } from "@/components/customer/queue/QueueNotFound";
+import { useQueueRealtime, QueueData } from "@/hooks/useQueueRealtime";
 
 const QueueStatusPage: React.FC = () => {
   const location = useLocation();
@@ -43,7 +17,7 @@ const QueueStatusPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [queueData, setQueueData] = useState<QueueData | undefined>(location.state?.queueData);
   
-  // If there's no location state, fetch the queue data from Supabase
+  // Fetch queue data if not available in location state
   useEffect(() => {
     const fetchQueueData = async () => {
       if (location.state?.queueData) {
@@ -117,131 +91,15 @@ const QueueStatusPage: React.FC = () => {
     setQueueData(updatedData);
   };
 
-  // Set up real-time subscription for queue updates
-  useEffect(() => {
-    if (!queueData || !params.ticketId) return;
-    
-    const ticketId = parseInt(params.ticketId);
-    if (isNaN(ticketId)) {
-      console.error("Invalid ticket ID for subscription:", params.ticketId);
-      return;
-    }
-    
-    console.log("Setting up realtime subscription for ticket:", ticketId);
-    
-    // First, enable replication for the queue table
-    const setupReplication = async () => {
-      try {
-        await supabase.rpc('alter_table_replica_identity_full', { table_name: 'queue' });
-        console.log("Replication identity set successfully");
-      } catch (error) {
-        console.log("Replication setup error (can be ignored if already set):", error);
-      }
-    };
-    
-    setupReplication();
-    
-    // Setup direct channel for this specific ticket
-    const specificTicketChannel = supabase
-      .channel(`specific_ticket_${ticketId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'queue',
-          filter: `ticket_number=eq.${ticketId}`
-        },
-        (payload: SupabaseRealtimePayload) => {
-          console.log("Queue update received:", payload);
-          
-          // Get the updated status from the payload
-          if (payload.new && payload.old && payload.new.status !== payload.old.status) {
-            const newStatus = payload.new.status as "waiting" | "almost" | "serving" | "completed" | "cancelled" | "skipped";
-            
-            // Show notifications based on status change
-            if (newStatus === 'almost') {
-              toast(
-                <div className="flex items-center">
-                  <Bell className="mr-2 h-5 w-5 text-yellow-500" />
-                  <div>
-                    <div className="font-semibold">ใกล้ถึงคิวของคุณแล้ว</div>
-                    <div className="text-sm">กรุณามาที่พื้นที่รอเรียกคิว</div>
-                  </div>
-                </div>,
-                { duration: 10000 }
-              );
-              // Play notification sound
-              const audio = new Audio('/notification.mp3');
-              audio.play().catch(e => console.log("Audio play error:", e));
-            } else if (newStatus === 'serving') {
-              toast(
-                <div className="flex items-center">
-                  <AlertCircle className="mr-2 h-5 w-5 text-red-500" />
-                  <div>
-                    <div className="font-semibold">ถึงคิวของคุณแล้ว!</div>
-                    <div className="text-sm">กรุณามาที่เคาน์เตอร์บริการทันที</div>
-                  </div>
-                </div>,
-                { duration: 0 } // Won't auto-dismiss
-              );
-              // Play urgent notification sound
-              const audio = new Audio('/urgent-notification.mp3');
-              audio.play().catch(e => console.log("Audio play error:", e));
-            }
-            
-            // Update the queueData with the new status
-            updateQueueData({
-              ...queueData,
-              status: newStatus
-            });
-            
-            // Fetch updated position if needed
-            if (newStatus === 'waiting') {
-              const fetchUpdatedPosition = async () => {
-                try {
-                  const { data: waitingBefore, error } = await supabase
-                    .from('queue')
-                    .select('ticket_number', { count: 'exact' })
-                    .eq('status', 'waiting')
-                    .lt('ticket_number', ticketId);
-                  
-                  if (!error) {
-                    const position = (waitingBefore?.length || 0) + 1;
-                    updateQueueData({
-                      ...queueData,
-                      status: newStatus,
-                      position: position
-                    });
-                  }
-                } catch (error) {
-                  console.error("Error fetching updated position:", error);
-                }
-              };
-              fetchUpdatedPosition();
-            }
-          }
-        }
-      )
-      .subscribe((status) => {
-        console.log("Subscription status:", status);
-      });
-    
-    return () => {
-      console.log("Removing channel subscription");
-      supabase.removeChannel(specificTicketChannel);
-    };
-  }, [params.ticketId, queueData]);
+  // Set up real-time subscription for queue updates using custom hook
+  useQueueRealtime(params.ticketId, queueData, updateQueueData);
 
   if (loading) {
     return (
       <Layout userRole="customer">
         <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 -mt-16 -mb-6 py-16 px-4">
           <div className="container mx-auto">
-            <div className="max-w-md mx-auto flex flex-col items-center justify-center pt-20">
-              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-com7-primary"></div>
-              <p className="mt-4 text-gray-600">กำลังโหลดข้อมูลคิว...</p>
-            </div>
+            <QueueLoader />
           </div>
         </div>
       </Layout>
@@ -253,11 +111,7 @@ const QueueStatusPage: React.FC = () => {
       <Layout userRole="customer">
         <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 -mt-16 -mb-6 py-16 px-4">
           <div className="container mx-auto">
-            <div className="max-w-md mx-auto flex flex-col items-center justify-center pt-20">
-              <div className="text-xl font-semibold text-red-500 mb-4">ไม่พบข้อมูลคิว</div>
-              <p className="text-gray-600 mb-6">เราไม่พบคิวที่คุณต้องการ คิวอาจถูกยกเลิกหรือหมดอายุแล้ว</p>
-              <Button onClick={() => navigate("/")}>กลับไปยังหน้าหลัก</Button>
-            </div>
+            <QueueNotFound />
           </div>
         </div>
       </Layout>
