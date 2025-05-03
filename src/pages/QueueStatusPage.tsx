@@ -8,6 +8,22 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { AlertCircle, Bell } from "lucide-react";
 
+// Define proper types for Supabase realtime payload
+interface SupabaseRealtimePayload {
+  eventType: string;
+  new: {
+    status: "waiting" | "almost" | "serving" | "completed" | "cancelled" | "skipped";
+    ticket_number: number;
+    [key: string]: any;
+  };
+  old: {
+    status: "waiting" | "almost" | "serving" | "completed" | "cancelled" | "skipped";
+    ticket_number: number;
+    [key: string]: any;
+  };
+  [key: string]: any;
+}
+
 const QueueStatusPage: React.FC = () => {
   const location = useLocation();
   const params = useParams<{ ticketId: string }>();
@@ -124,7 +140,7 @@ const QueueStatusPage: React.FC = () => {
           table: 'queue',
           filter: `ticket_number=eq.${ticketId}`
         },
-        (payload: any) => {
+        (payload: SupabaseRealtimePayload) => {
           console.log("Queue update received:", payload);
           
           // Get the updated status from the payload
