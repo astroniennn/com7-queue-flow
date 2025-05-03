@@ -24,12 +24,24 @@ interface SupabaseRealtimePayload {
   [key: string]: any;
 }
 
+// Define the proper Queue Data type
+interface QueueData {
+  ticketNumber: number;
+  name: string;
+  phoneNumber: string;
+  serviceType: string;
+  registeredAt: string;
+  estimatedWaitTime: number;
+  position: number;
+  status: "waiting" | "almost" | "serving" | "completed" | "cancelled" | "skipped";
+}
+
 const QueueStatusPage: React.FC = () => {
   const location = useLocation();
   const params = useParams<{ ticketId: string }>();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
-  const [queueData, setQueueData] = useState(location.state?.queueData);
+  const [queueData, setQueueData] = useState<QueueData | undefined>(location.state?.queueData);
   
   // If there's no location state, fetch the queue data from Supabase
   useEffect(() => {
@@ -100,7 +112,7 @@ const QueueStatusPage: React.FC = () => {
   }, [location.state, params.ticketId, navigate]);
 
   // Update queue data function to be passed to QueueStatus component
-  const updateQueueData = (updatedData: any) => {
+  const updateQueueData = (updatedData: QueueData) => {
     console.log("Updating queue data with:", updatedData);
     setQueueData(updatedData);
   };
