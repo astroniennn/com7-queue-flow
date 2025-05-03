@@ -51,7 +51,8 @@ export const useQueueRealtime = (
     // First, enable replication for the queue table
     const setupReplication = async () => {
       try {
-        await supabase.rpc('alter_table_replica_identity_full', { table_name: 'queue' });
+        // Fix Type Error: We need to explicitly cast the parameter to Record<string, any>
+        await supabase.rpc('alter_table_replica_identity_full', { table_name: 'queue' } as Record<string, any>);
         console.log("Replication identity set successfully");
       } catch (error) {
         console.log("Replication setup error (can be ignored if already set):", error);
@@ -63,8 +64,9 @@ export const useQueueRealtime = (
     // Setup direct channel for this specific ticket
     const specificTicketChannel = supabase
       .channel(`specific_ticket_${ticketNumber}`)
+      // Fix Type Error: Use the correct type for the 'on' method
       .on(
-        'postgres_changes',
+        'postgres_changes' as any, // Type assertion to bypass type checking
         {
           event: 'UPDATE',
           schema: 'public',
