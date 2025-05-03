@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from "react";
 import { useLocation, useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -123,7 +124,7 @@ const QueueStatusPage: React.FC = () => {
           table: 'queue',
           filter: `ticket_number=eq.${ticketId}`
         },
-        (payload) => {
+        (payload: any) => {
           console.log("Queue update received:", payload);
           
           // Get the updated status from the payload
