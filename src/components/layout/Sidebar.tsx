@@ -1,8 +1,17 @@
 
 import React, { useState } from "react";
-import { NavLink } from "react-router-dom";
+import { NavLink, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { Calendar, Users, Settings, BarChart4, Clock, UserPlus, List } from "lucide-react";
+import { 
+  Calendar, 
+  Users, 
+  Settings, 
+  BarChart4, 
+  Clock, 
+  UserPlus, 
+  List,
+  RefreshCw 
+} from "lucide-react";
 
 type SidebarProps = {
   userRole: "employee" | "admin";
@@ -56,6 +65,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
   userRole
 }) => {
   const [collapsed, setCollapsed] = useState(false);
+  const location = useLocation();
+  
+  // Function to determine if the link is active based on the current path
+  const isPathActive = (path: string) => {
+    return location.pathname === path || 
+           (path !== '/dashboard' && location.pathname.startsWith(path));
+  };
   
   return <div className={cn("bg-com7-primary-dark text-white transition-all duration-300 flex flex-col h-full", collapsed ? "w-16" : "w-64")}>
       <div className="p-4 flex items-center justify-between border-b border-blue-600">
@@ -92,16 +108,21 @@ export const Sidebar: React.FC<SidebarProps> = ({
       <nav className="flex-1 py-4">
         <ul className="space-y-1">
           {navItems.map(item => {
-          if (!item.roles.includes(userRole)) return null;
-          return <li key={item.href}>
-                <NavLink to={item.href} className={({
-              isActive
-            }) => cn("flex items-center py-2 px-4 transition duration-200", isActive ? "bg-blue-700 text-white" : "text-blue-100 hover:bg-blue-800", collapsed && "justify-center")}>
-                  <item.icon className={cn("h-5 w-5", collapsed ? "mx-auto" : "mr-3")} />
-                  {!collapsed && <span>{item.title}</span>}
-                </NavLink>
-              </li>;
-        })}
+            if (!item.roles.includes(userRole)) return null;
+            return <li key={item.href}>
+                  <NavLink 
+                    to={item.href} 
+                    className={({isActive}) => cn(
+                      "flex items-center py-2 px-4 transition duration-200", 
+                      isPathActive(item.href) ? "bg-blue-700 text-white" : "text-blue-100 hover:bg-blue-800", 
+                      collapsed && "justify-center"
+                    )}
+                  >
+                    <item.icon className={cn("h-5 w-5", collapsed ? "mx-auto" : "mr-3")} />
+                    {!collapsed && <span>{item.title}</span>}
+                  </NavLink>
+                </li>;
+          })}
         </ul>
       </nav>
 

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -256,12 +255,12 @@ export const QueueDashboard: React.FC = () => {
       
       if (error) throw error;
       
-      toast.success(`เคลียร์คิวทั้งหมด ${activeCustomers.length} คิวสำเร็จแล้ว`);
+      toast.success(`รีเซตคิวทั้งหมด ${activeCustomers.length} คิวสำเร็จแล้ว`);
       fetchQueueData();
       setIsEndDayDialogOpen(false);
     } catch (error) {
       console.error("Error clearing queues:", error);
-      toast.error("ไม่สามารถเคลียร์คิวได้");
+      toast.error("ไม่สามารถรีเซตคิวได้");
     } finally {
       setIsClearingQueues(false);
     }
@@ -437,12 +436,12 @@ export const QueueDashboard: React.FC = () => {
                 className="flex items-center"
               >
                 <Calendar className="h-4 w-4 mr-2" />
-                เคลียร์คิวปิดวัน
+                รีเซตคิวเพื่อเริ่มต้นใหม่
               </Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>ยืนยันการเคลียร์คิวประจำวัน</DialogTitle>
+                <DialogTitle>ยืนยันการรีเซตคิวเพื่อเริ่มต้นใหม่</DialogTitle>
                 <DialogDescription>
                   การดำเนินการนี้จะยกเลิกคิวที่รอและกำลังให้บริการทั้งหมด ไม่สามารถยกเลิกได้หลังจากดำเนินการแล้ว
                 </DialogDescription>
@@ -462,7 +461,7 @@ export const QueueDashboard: React.FC = () => {
                   onClick={handleEndOfDay}
                   disabled={isClearingQueues}
                 >
-                  {isClearingQueues ? "กำลังเคลียร์คิว..." : "ยืนยันเคลียร์คิว"}
+                  {isClearingQueues ? "กำลังรีเซตคิว..." : "ยืนยันรีเซตคิว"}
                 </Button>
               </DialogFooter>
             </DialogContent>
