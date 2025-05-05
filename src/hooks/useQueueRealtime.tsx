@@ -51,8 +51,9 @@ export const useQueueRealtime = (
     // First, enable replication for the queue table
     const setupReplication = async () => {
       try {
-        // Fix Type Error: We need to explicitly cast the parameter to Record<string, any>
-        await supabase.rpc('alter_table_replica_identity_full', { table_name: 'queue' } as Record<string, any>);
+        // Fix Type Error: We need to explicitly cast the parameter and the function itself
+        const rpcFunction = 'alter_table_replica_identity_full';
+        await (supabase.rpc as any)(rpcFunction, { table_name: 'queue' });
         console.log("Replication identity set successfully");
       } catch (error) {
         console.log("Replication setup error (can be ignored if already set):", error);
