@@ -233,7 +233,7 @@ export const QueueDashboard: React.FC = () => {
   const handleEndOfDay = async () => {
     setIsClearingQueues(true);
     try {
-      // Find all waiting and serving customers
+      // Step 1: Find all waiting and serving customers
       const activeCustomers = customers.filter(
         c => c.status === "waiting" || c.status === "serving"
       );
@@ -244,8 +244,8 @@ export const QueueDashboard: React.FC = () => {
         return;
       }
       
-      // Update all active customers to cancelled status
-      const { error } = await supabase
+      // Step 2: Update all active customers to cancelled status
+      const { error: cancelError } = await supabase
         .from('queue')
         .update({ 
           status: 'cancelled',
@@ -253,9 +253,15 @@ export const QueueDashboard: React.FC = () => {
         })
         .in('id', activeCustomers.map(c => c.id));
       
-      if (error) throw error;
+      if (cancelError) throw cancelError;
       
-      toast.success(`รีเซตคิวทั้งหมด ${activeCustomers.length} คิวสำเร็จแล้ว`);
+      // Step 3: Reset the ticket_number sequence to start from 1 again
+      const { error: resetError } = await supabase
+        .rpc('reset_ticket_sequence');
+      
+      if (resetError) throw resetError;
+      
+      toast.success(`รีเซตคิวทั้งหมด ${activeCustomers.length} คิวสำเร็จแล้ว และตั้งค่าลำดับคิวเป็นค่าเริ่มต้น`);
       fetchQueueData();
       setIsEndDayDialogOpen(false);
     } catch (error) {
@@ -443,7 +449,7 @@ export const QueueDashboard: React.FC = () => {
               <DialogHeader>
                 <DialogTitle>ยืนยันการรีเซตคิวเพื่อเริ่มต้นใหม่</DialogTitle>
                 <DialogDescription>
-                  การดำเนินการนี้จะยกเลิกคิวที่รอและกำลังให้บริการทั้งหมด ไม่สามารถยกเลิกได้หลังจากดำเนินการแล้ว
+                  การดำเนินการนี้จะยกเลิกคิวที่รอและกำลังให้บริการทั้งหมด และตั้งค่าลำดับคิวกลับเป็นค่าเริ่มต้น (เริ่มที่ 1) ไม่สามารถยกเลิกได้หลังจากดำเนินการแล้ว
                 </DialogDescription>
               </DialogHeader>
               <div className="py-4 flex items-center justify-center text-amber-600">
