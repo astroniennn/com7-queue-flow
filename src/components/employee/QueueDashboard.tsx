@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { 
   Play, 
@@ -14,7 +15,9 @@ import {
   SkipForward, 
   Bell, 
   Search,
-  RefreshCw
+  RefreshCw,
+  AlertTriangle,
+  Calendar
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -34,6 +37,19 @@ export const QueueDashboard: React.FC = () => {
   const [activeTab, setActiveTab] = useState<string>("waiting");
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [searchQuery, setSearchQuery] = useState<string>("");
+  const [isClearingQueues, setIsClearingQueues] = useState<boolean>(false);
+  const [isEndDayDialogOpen, setIsEndDayDialogOpen] = useState<boolean>(false);
+  
+  // Stats
+  const [todayStats, setTodayStats] = useState({
+    total: 0,
+    waiting: 0,
+    serving: 0,
+    completed: 0,
+    cancelled: 0,
+    skipped: 0,
+    avgWaitTime: 0
+  });
   
   const fetchQueueData = async () => {
     setIsLoading(true);
@@ -71,12 +87,35 @@ export const QueueDashboard: React.FC = () => {
       }));
 
       setCustomers(transformedData);
+      calculateStats(transformedData);
     } catch (error) {
       console.error("Error fetching queue data:", error);
       toast.error("ไม่สามารถโหลดข้อมูลคิวได้");
     } finally {
       setIsLoading(false);
     }
+  };
+  
+  const calculateStats = (data: Customer[]) => {
+    const stats = {
+      total: data.length,
+      waiting: data.filter(c => c.status === "waiting").length,
+      serving: data.filter(c => c.status === "serving").length,
+      completed: data.filter(c => c.status === "completed").length,
+      cancelled: data.filter(c => c.status === "cancelled").length,
+      skipped: data.filter(c => c.status === "skipped").length,
+      avgWaitTime: 0
+    };
+    
+    // Calculate average wait time from estimated wait times
+    const waitingCustomers = data.filter(c => c.status === "waiting" || c.status === "serving");
+    if (waitingCustomers.length > 0) {
+      stats.avgWaitTime = Math.round(
+        waitingCustomers.reduce((acc, curr) => acc + curr.estimated_wait_time, 0) / waitingCustomers.length
+      );
+    }
+    
+    setTodayStats(stats);
   };
   
   useEffect(() => {
@@ -190,6 +229,42 @@ export const QueueDashboard: React.FC = () => {
   const handleRefresh = () => {
     fetchQueueData();
     toast.success("รีเฟรชข้อมูลคิวแล้ว");
+  };
+
+  const handleEndOfDay = async () => {
+    setIsClearingQueues(true);
+    try {
+      // Find all waiting and serving customers
+      const activeCustomers = customers.filter(
+        c => c.status === "waiting" || c.status === "serving"
+      );
+      
+      if (activeCustomers.length === 0) {
+        toast.info("ไม่มีคิวที่รอหรือกำลังให้บริการ");
+        setIsEndDayDialogOpen(false);
+        return;
+      }
+      
+      // Update all active customers to cancelled status
+      const { error } = await supabase
+        .from('queue')
+        .update({ 
+          status: 'cancelled',
+          completed_at: new Date().toISOString()
+        })
+        .in('id', activeCustomers.map(c => c.id));
+      
+      if (error) throw error;
+      
+      toast.success(`เคลียร์คิวทั้งหมด ${activeCustomers.length} คิวสำเร็จแล้ว`);
+      fetchQueueData();
+      setIsEndDayDialogOpen(false);
+    } catch (error) {
+      console.error("Error clearing queues:", error);
+      toast.error("ไม่สามารถเคลียร์คิวได้");
+    } finally {
+      setIsClearingQueues(false);
+    }
   };
   
   const getStatusBadge = (status: string) => {
@@ -342,19 +417,60 @@ export const QueueDashboard: React.FC = () => {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold text-gray-800">แดชบอร์ดคิว</h2>
-        <Button 
-          size="sm" 
-          variant="outline"
-          className="flex items-center"
-          onClick={handleRefresh}
-          disabled={isLoading}
-        >
-          <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? "animate-spin" : ""}`} />
-          {isLoading ? "กำลังรีเฟรช..." : "รีเฟรช"}
-        </Button>
+        <div className="flex gap-2">
+          <Button 
+            size="sm" 
+            variant="outline"
+            className="flex items-center"
+            onClick={handleRefresh}
+            disabled={isLoading}
+          >
+            <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? "animate-spin" : ""}`} />
+            {isLoading ? "กำลังรีเฟรช..." : "รีเฟรช"}
+          </Button>
+          
+          <Dialog open={isEndDayDialogOpen} onOpenChange={setIsEndDayDialogOpen}>
+            <DialogTrigger asChild>
+              <Button 
+                size="sm" 
+                variant="destructive" 
+                className="flex items-center"
+              >
+                <Calendar className="h-4 w-4 mr-2" />
+                เคลียร์คิวปิดวัน
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>ยืนยันการเคลียร์คิวประจำวัน</DialogTitle>
+                <DialogDescription>
+                  การดำเนินการนี้จะยกเลิกคิวที่รอและกำลังให้บริการทั้งหมด ไม่สามารถยกเลิกได้หลังจากดำเนินการแล้ว
+                </DialogDescription>
+              </DialogHeader>
+              <div className="py-4 flex items-center justify-center text-amber-600">
+                <AlertTriangle className="h-12 w-12" />
+              </div>
+              <DialogFooter>
+                <Button 
+                  variant="outline" 
+                  onClick={() => setIsEndDayDialogOpen(false)}
+                >
+                  ยกเลิก
+                </Button>
+                <Button 
+                  variant="destructive" 
+                  onClick={handleEndOfDay}
+                  disabled={isClearingQueues}
+                >
+                  {isClearingQueues ? "กำลังเคลียร์คิว..." : "ยืนยันเคลียร์คิว"}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-xl text-center">รอคิว</CardTitle>
@@ -382,6 +498,16 @@ export const QueueDashboard: React.FC = () => {
           <CardContent>
             <div className="text-4xl font-bold text-center text-green-600">
               {getTabCount("completed")}
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-xl text-center">เวลารอเฉลี่ย</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-4xl font-bold text-center text-purple-600">
+              {todayStats.avgWaitTime} <span className="text-lg">นาที</span>
             </div>
           </CardContent>
         </Card>
