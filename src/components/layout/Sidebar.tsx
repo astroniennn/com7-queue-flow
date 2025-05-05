@@ -10,7 +10,9 @@ import {
   Clock, 
   UserPlus, 
   List,
-  RefreshCw 
+  RefreshCw,
+  LayoutDashboard,
+  History 
 } from "lucide-react";
 
 type SidebarProps = {
@@ -21,45 +23,59 @@ type NavItem = {
   title: string;
   icon: React.ElementType;
   href: string;
+  hash?: string;
   roles: Array<"employee" | "admin">;
 };
 
-const navItems: NavItem[] = [{
-  title: "แดชบอร์ดคิว",
-  icon: List,
-  href: "/dashboard",
-  roles: ["employee", "admin"]
-}, {
-  title: "ให้บริการลูกค้า",
-  icon: Users,
-  href: "/serve",
-  roles: ["employee", "admin"]
-}, {
-  title: "ลงทะเบียนลูกค้าหน้าร้าน",
-  icon: UserPlus,
-  href: "/register-walkin",
-  roles: ["employee", "admin"]
-}, {
-  title: "ประวัติคิว",
-  icon: Clock,
-  href: "/history",
-  roles: ["employee", "admin"]
-}, {
-  title: "การวิเคราะห์",
-  icon: BarChart4,
-  href: "/analytics",
-  roles: ["admin"]
-}, {
-  title: "จัดการบริการ",
-  icon: Calendar,
-  href: "/services",
-  roles: ["admin"]
-}, {
-  title: "ตั้งค่าระบบ",
-  icon: Settings,
-  href: "/settings",
-  roles: ["admin"]
-}];
+const navItems: NavItem[] = [
+  {
+    title: "การจัดการคิว",
+    icon: LayoutDashboard,
+    href: "/dashboard",
+    hash: "#queue",
+    roles: ["employee", "admin"]
+  }, 
+  {
+    title: "ให้บริการลูกค้า",
+    icon: Users,
+    href: "/dashboard",
+    hash: "#service",
+    roles: ["employee", "admin"]
+  }, 
+  {
+    title: "ลงทะเบียนลูกค้าหน้าร้าน",
+    icon: UserPlus,
+    href: "/register-walkin",
+    roles: ["employee", "admin"]
+  }, 
+  {
+    title: "ประวัติคิว",
+    icon: History,
+    href: "/dashboard",
+    hash: "#history",
+    roles: ["employee", "admin"]
+  }, 
+  {
+    title: "การวิเคราะห์",
+    icon: BarChart4,
+    href: "/dashboard",
+    hash: "#analytics",
+    roles: ["admin"]
+  }, 
+  {
+    title: "จัดการบริการ",
+    icon: Calendar,
+    href: "/services",
+    roles: ["admin"]
+  }, 
+  {
+    title: "ตั้งค่าระบบ",
+    icon: Settings,
+    href: "/dashboard",
+    hash: "#settings",
+    roles: ["admin"]
+  }
+];
 
 export const Sidebar: React.FC<SidebarProps> = ({
   userRole
@@ -67,10 +83,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const [collapsed, setCollapsed] = useState(false);
   const location = useLocation();
   
-  // Function to determine if the link is active based on the current path
-  const isPathActive = (path: string) => {
-    return location.pathname === path || 
-           (path !== '/dashboard' && location.pathname.startsWith(path));
+  // Function to determine if the link is active based on the current path and hash
+  const isPathActive = (path: string, hash?: string) => {
+    if (hash) {
+      return location.pathname === path && (location.hash === hash || (!location.hash && hash === '#queue'));
+    }
+    return location.pathname === path;
   };
   
   return <div className={cn("bg-com7-primary-dark text-white transition-all duration-300 flex flex-col h-full", collapsed ? "w-16" : "w-64")}>
@@ -109,12 +127,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
         <ul className="space-y-1">
           {navItems.map(item => {
             if (!item.roles.includes(userRole)) return null;
-            return <li key={item.href}>
+            const fullHref = item.hash ? `${item.href}${item.hash}` : item.href;
+            
+            return <li key={fullHref}>
                   <NavLink 
-                    to={item.href} 
+                    to={fullHref} 
                     className={({isActive}) => cn(
                       "flex items-center py-2 px-4 transition duration-200", 
-                      isPathActive(item.href) ? "bg-blue-700 text-white" : "text-blue-100 hover:bg-blue-800", 
+                      isPathActive(item.href, item.hash) ? "bg-blue-700 text-white" : "text-blue-100 hover:bg-blue-800", 
                       collapsed && "justify-center"
                     )}
                   >
