@@ -11,6 +11,7 @@ import LoginPage from "./pages/LoginPage";
 import DashboardPage from "./pages/DashboardPage";
 import WalkInPage from "./pages/WalkInPage";
 import AnalyticsPage from "./pages/AnalyticsPage";
+import ServicesPage from "./pages/ServicesPage";
 import PrivateRoute from "./components/auth/PrivateRoute";
 
 const queryClient = new QueryClient();
@@ -33,6 +34,11 @@ const App = () => (
           <Route path="/register-walkin" element={
             <PrivateRoute>
               <WalkInPage />
+            </PrivateRoute>
+          } />
+          <Route path="/services" element={
+            <PrivateRoute allowedRoles={["admin"]}>
+              <ServicesPage />
             </PrivateRoute>
           } />
           <Route path="/analytics" element={
