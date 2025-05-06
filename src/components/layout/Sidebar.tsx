@@ -14,6 +14,7 @@ import {
   LayoutDashboard,
   History 
 } from "lucide-react";
+import { TooltipProvider, Tooltip } from "@radix-ui/react-tooltip";
 
 type SidebarProps = {
   userRole: "employee" | "admin";
@@ -91,7 +92,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
     return location.pathname === path;
   };
   
-  return <div className={cn("bg-com7-primary-dark text-white transition-all duration-300 flex flex-col h-full", collapsed ? "w-16" : "w-64")}>
+  return (
+    <div className={cn("bg-com7-primary-dark text-white transition-all duration-300 flex flex-col h-full", collapsed ? "w-16" : "w-64")}>
       <div className="p-4 flex items-center justify-between border-b border-blue-600">
         <div className={cn("flex items-center", collapsed ? "justify-center w-full" : "")}>
           {collapsed ? (
@@ -156,5 +158,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <p>v1.0.0</p>
           </div>}
       </div>
-    </div>;
+    </div>
+  );
 };
