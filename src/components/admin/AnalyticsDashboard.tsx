@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -6,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowUp, ArrowDown, Users, Clock, Calendar, BarChart4, Activity } from "lucide-react";
 import { AreaChart, Area, BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { supabase } from "@/integrations/supabase/client";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { format, subDays, startOfWeek, endOfWeek, eachDayOfInterval, startOfMonth, endOfMonth, eachMonthOfInterval, subMonths } from "date-fns";
 import { th } from "date-fns/locale";
@@ -55,6 +54,7 @@ const serviceTypeColors = [
 
 export const AnalyticsDashboard: React.FC = () => {
   const [timeRange, setTimeRange] = useState<'daily' | 'weekly' | 'monthly'>('daily');
+  const queryClient = useQueryClient();
   
   // Fetch queue data
   const { data: queueData, isLoading: isQueueDataLoading } = useQuery({
@@ -424,8 +424,7 @@ export const AnalyticsDashboard: React.FC = () => {
               variant="outline" 
               size="sm" 
               onClick={() => {
-                const { refetch } = useQuery<QueryClient>().getQueryCache().find(['queueAnalytics'])!;
-                refetch();
+                queryClient.invalidateQueries({ queryKey: ['queueAnalytics'] });
                 toast.success("รีเฟรชข้อมูลวิเคราะห์แล้ว");
               }}
             >
