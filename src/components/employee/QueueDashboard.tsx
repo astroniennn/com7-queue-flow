@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -256,10 +257,15 @@ export const QueueDashboard: React.FC = () => {
       if (cancelError) throw cancelError;
       
       // Step 3: Reset the ticket_number sequence to start from 1 again
-      const { error: resetError } = await supabase
-        .rpc('reset_ticket_sequence');
+      // Make a separate call to reset the sequence
+      const { error: resetError } = await supabase.rpc('reset_ticket_sequence');
       
-      if (resetError) throw resetError;
+      if (resetError) {
+        console.error("Error resetting ticket sequence:", resetError);
+        throw resetError;
+      }
+      
+      console.log("Queue sequence reset successfully");
       
       toast.success(`รีเซตคิวทั้งหมด ${activeCustomers.length} คิวสำเร็จแล้ว และตั้งค่าลำดับคิวเป็นค่าเริ่มต้น`);
       fetchQueueData();
