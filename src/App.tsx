@@ -12,6 +12,7 @@ import DashboardPage from "./pages/DashboardPage";
 import WalkInPage from "./pages/WalkInPage";
 import AnalyticsPage from "./pages/AnalyticsPage";
 import ServicesPage from "./pages/ServicesPage";
+import SettingsPage from "./pages/SettingsPage";
 import PrivateRoute from "./components/auth/PrivateRoute";
 
 const queryClient = new QueryClient();
@@ -44,6 +45,11 @@ const App = () => (
           <Route path="/analytics" element={
             <PrivateRoute allowedRoles={["admin"]}>
               <AnalyticsPage />
+            </PrivateRoute>
+          } />
+          <Route path="/settings" element={
+            <PrivateRoute allowedRoles={["admin"]}>
+              <SettingsPage />
             </PrivateRoute>
           } />
           <Route path="*" element={<NotFound />} />

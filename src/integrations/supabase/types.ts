@@ -9,6 +9,30 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      notification_sounds: {
+        Row: {
+          created_at: string | null
+          file_path: string
+          id: string
+          is_default: boolean | null
+          name: string
+        }
+        Insert: {
+          created_at?: string | null
+          file_path: string
+          id?: string
+          is_default?: boolean | null
+          name: string
+        }
+        Update: {
+          created_at?: string | null
+          file_path?: string
+          id?: string
+          is_default?: boolean | null
+          name?: string
+        }
+        Relationships: []
+      }
       queue: {
         Row: {
           completed_at: string | null
@@ -71,6 +95,30 @@ export type Database = {
           estimated_time?: number
           id?: string
           name?: string
+        }
+        Relationships: []
+      }
+      system_settings: {
+        Row: {
+          category: string
+          id: string
+          key: string
+          updated_at: string | null
+          value: Json
+        }
+        Insert: {
+          category: string
+          id?: string
+          key: string
+          updated_at?: string | null
+          value: Json
+        }
+        Update: {
+          category?: string
+          id?: string
+          key?: string
+          updated_at?: string | null
+          value?: Json
         }
         Relationships: []
       }

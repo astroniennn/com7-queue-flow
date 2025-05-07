@@ -21,13 +21,6 @@ const QueueHistoryDashboard = () => (
   </div>
 );
 
-const SystemSettingsDashboard = () => (
-  <div className="p-6 bg-white rounded-md shadow">
-    <h2 className="text-2xl font-bold mb-4">ตั้งค่าระบบ</h2>
-    <p className="text-gray-500">ระบบตั้งค่าอยู่ระหว่างการพัฒนา พร้อมให้บริการเร็วๆ นี้</p>
-  </div>
-);
-
 const DashboardPage: React.FC = () => {
   const { user } = useAuth();
   const userRole = user?.role || "employee";
@@ -36,6 +29,13 @@ const DashboardPage: React.FC = () => {
   
   // Extract the hash part from the URL or default to 'queue'
   const currentTab = location.hash.slice(1) || 'queue';
+  
+  // For settings hash, redirect to the settings page
+  React.useEffect(() => {
+    if (currentTab === 'settings' && userRole === 'admin') {
+      navigate('/settings');
+    }
+  }, [currentTab, navigate, userRole]);
   
   // Render the appropriate dashboard based on the hash
   const renderDashboard = () => {
@@ -46,8 +46,6 @@ const DashboardPage: React.FC = () => {
         return <QueueHistoryDashboard />;
       case 'analytics':
         return <AnalyticsDashboard />;
-      case 'settings':
-        return <SystemSettingsDashboard />;
       case 'queue':
       default:
         return <QueueDashboard />;
