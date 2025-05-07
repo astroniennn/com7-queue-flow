@@ -35,7 +35,7 @@ export const getSettingsByCategory = async (category: SystemSettingCategory) => 
 };
 
 // Update a setting
-export const updateSetting = async (category: SystemSettingCategory, key: string, value: any) => {
+export const updateSetting = async (category: SystemSettingCategory, key: string, value: string) => {
   const { data, error } = await supabase
     .from("system_settings")
     .update({ value, updated_at: new Date().toISOString() })

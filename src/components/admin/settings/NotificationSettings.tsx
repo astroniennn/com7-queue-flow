@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { getNotificationSounds, uploadNotificationSound, deleteNotificationSound, setDefaultNotificationSound, NotificationSound } from "@/services/settingsService";
 import { Trash2, Upload, Play, Pause, Check } from "lucide-react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
@@ -270,18 +270,19 @@ export const NotificationSettings = () => {
                       </DialogHeader>
                       <p className="py-4">คุณต้องการลบเสียงแจ้งเตือน "{sound.name}" ใช่หรือไม่?</p>
                       <div className="flex justify-end gap-2">
-                        <Button variant="outline" onClick={() => document.querySelector('[data-state="open"] button[aria-label="Close"]')?.click()}>
-                          ยกเลิก
-                        </Button>
-                        <Button 
-                          variant="destructive" 
-                          onClick={() => {
-                            handleDeleteSound(sound);
-                            document.querySelector('[data-state="open"] button[aria-label="Close"]')?.click();
-                          }}
-                        >
-                          ลบเสียง
-                        </Button>
+                        <DialogClose asChild>
+                          <Button variant="outline">
+                            ยกเลิก
+                          </Button>
+                        </DialogClose>
+                        <DialogClose asChild>
+                          <Button 
+                            variant="destructive" 
+                            onClick={() => handleDeleteSound(sound)}
+                          >
+                            ลบเสียง
+                          </Button>
+                        </DialogClose>
                       </div>
                     </DialogContent>
                   </Dialog>

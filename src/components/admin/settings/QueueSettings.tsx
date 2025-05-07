@@ -16,8 +16,8 @@ const formSchema = z.object({
   opening_hours_end: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/, {
     message: "กรุณาระบุเวลาในรูปแบบ HH:MM",
   }),
-  max_queue_size: z.string().transform(val => parseInt(val, 10)),
-  average_service_time: z.string().transform(val => parseInt(val, 10)),
+  max_queue_size: z.coerce.number().int().positive(),
+  average_service_time: z.coerce.number().int().positive(),
 });
 
 export const QueueSettings = () => {
@@ -29,8 +29,8 @@ export const QueueSettings = () => {
     defaultValues: {
       opening_hours_start: "10:00",
       opening_hours_end: "21:00",
-      max_queue_size: "50",
-      average_service_time: "15"
+      max_queue_size: 50,
+      average_service_time: 15
     }
   });
 
@@ -41,7 +41,12 @@ export const QueueSettings = () => {
       
       // Convert the data array to a key-value object
       const settings = data.reduce((acc, item) => {
-        acc[item.key] = JSON.parse(item.value);
+        // Parse JSON strings, but ensure we handle all possible types
+        const parsedValue = typeof item.value === 'string' 
+          ? JSON.parse(item.value) 
+          : item.value;
+          
+        acc[item.key] = parsedValue;
         return acc;
       }, {} as Record<string, any>);
       
@@ -50,8 +55,8 @@ export const QueueSettings = () => {
       form.reset({
         opening_hours_start: openingHours.start,
         opening_hours_end: openingHours.end,
-        max_queue_size: String(settings.max_queue_size || 50),
-        average_service_time: String(settings.average_service_time || 15)
+        max_queue_size: Number(settings.max_queue_size || 50),
+        average_service_time: Number(settings.average_service_time || 15)
       });
     } catch (error) {
       console.error("Error loading settings:", error);
@@ -81,8 +86,8 @@ export const QueueSettings = () => {
       await updateSetting("queue", "opening_hours", JSON.stringify(openingHours));
       
       // Update other settings
-      await updateSetting("queue", "max_queue_size", values.max_queue_size);
-      await updateSetting("queue", "average_service_time", values.average_service_time);
+      await updateSetting("queue", "max_queue_size", String(values.max_queue_size));
+      await updateSetting("queue", "average_service_time", String(values.average_service_time));
       
       toast({
         title: "บันทึกการตั้งค่าสำเร็จ",
@@ -143,7 +148,12 @@ export const QueueSettings = () => {
               <FormItem>
                 <FormLabel>จำนวนคิวสูงสุดต่อวัน</FormLabel>
                 <FormControl>
-                  <Input type="number" min="1" {...field} />
+                  <Input 
+                    type="number" 
+                    min="1" 
+                    {...field}
+                    onChange={(e) => field.onChange(e.target.valueAsNumber)}
+                  />
                 </FormControl>
                 <FormDescription>
                   จำนวนคิวสูงสุดที่สามารถรับได้ต่อวัน
@@ -160,7 +170,12 @@ export const QueueSettings = () => {
               <FormItem>
                 <FormLabel>เวลาให้บริการเฉลี่ย (นาที)</FormLabel>
                 <FormControl>
-                  <Input type="number" min="1" {...field} />
+                  <Input 
+                    type="number" 
+                    min="1" 
+                    {...field}
+                    onChange={(e) => field.onChange(e.target.valueAsNumber)}
+                  />
                 </FormControl>
                 <FormDescription>
                   เวลาเฉลี่ยในการให้บริการลูกค้าแต่ละคน

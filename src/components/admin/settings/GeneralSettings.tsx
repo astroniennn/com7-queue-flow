@@ -34,7 +34,12 @@ export const GeneralSettings = () => {
       
       // Convert the data array to a key-value object
       const settings = data.reduce((acc, item) => {
-        acc[item.key] = JSON.parse(item.value);
+        // Parse JSON strings, but ensure we handle all possible types
+        const parsedValue = typeof item.value === 'string' 
+          ? JSON.parse(item.value) 
+          : item.value;
+          
+        acc[item.key] = parsedValue;
         return acc;
       }, {} as Record<string, any>);
       
