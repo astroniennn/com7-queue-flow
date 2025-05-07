@@ -35,10 +35,13 @@ export const getSettingsByCategory = async (category: SystemSettingCategory) => 
 };
 
 // Update a setting
-export const updateSetting = async (category: SystemSettingCategory, key: string, value: string) => {
+export const updateSetting = async (category: SystemSettingCategory, key: string, value: any) => {
+  // Convert value to JSON string if it's not already a string
+  const stringValue = typeof value === 'string' ? value : JSON.stringify(value);
+  
   const { data, error } = await supabase
     .from("system_settings")
-    .update({ value, updated_at: new Date().toISOString() })
+    .update({ value: stringValue, updated_at: new Date().toISOString() })
     .eq("category", category)
     .eq("key", key)
     .select();
@@ -72,7 +75,10 @@ export const uploadNotificationSound = async (file: File) => {
   const fileName = `${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
   const filePath = `${fileName}`;
 
-  const { error: uploadError } = await supabase.storage
+  console.log("Attempting to upload file to storage bucket:", filePath);
+  
+  // Upload file to storage
+  const { error: uploadError, data: uploadData } = await supabase.storage
     .from("notification-sounds")
     .upload(filePath, file, {
       cacheControl: '3600',
@@ -84,9 +90,14 @@ export const uploadNotificationSound = async (file: File) => {
     throw uploadError;
   }
 
+  console.log("File uploaded successfully:", uploadData);
+
+  // Get the public URL
   const { data: { publicUrl } } = supabase.storage
     .from("notification-sounds")
     .getPublicUrl(filePath);
+
+  console.log("Public URL generated:", publicUrl);
 
   // Add record to notification_sounds table
   const { data, error } = await supabase
@@ -102,6 +113,7 @@ export const uploadNotificationSound = async (file: File) => {
     throw error;
   }
 
+  console.log("Notification sound record added:", data);
   return data[0];
 };
 
@@ -111,6 +123,8 @@ export const deleteNotificationSound = async (id: string, filePath: string) => {
   const fileName = filePath.split("/").pop();
 
   if (fileName) {
+    console.log("Attempting to delete file from storage:", fileName);
+    
     // Delete file from storage
     const { error: deleteFileError } = await supabase.storage
       .from("notification-sounds")
@@ -120,8 +134,12 @@ export const deleteNotificationSound = async (id: string, filePath: string) => {
       console.error("Error deleting file:", deleteFileError);
       throw deleteFileError;
     }
+    
+    console.log("File deleted successfully");
   }
 
+  console.log("Attempting to delete record from database, id:", id);
+  
   // Delete record from notification_sounds table
   const { error } = await supabase
     .from("notification_sounds")
@@ -132,12 +150,15 @@ export const deleteNotificationSound = async (id: string, filePath: string) => {
     console.error("Error deleting notification sound record:", error);
     throw error;
   }
-
+  
+  console.log("Record deleted successfully");
   return true;
 };
 
 // Set a notification sound as default
 export const setDefaultNotificationSound = async (id: string) => {
+  console.log("Setting default notification sound, id:", id);
+  
   // First, unset any existing default
   const { error: resetError } = await supabase
     .from("notification_sounds")
@@ -161,5 +182,6 @@ export const setDefaultNotificationSound = async (id: string) => {
     throw error;
   }
 
+  console.log("Default notification sound set successfully:", data);
   return data[0];
 };

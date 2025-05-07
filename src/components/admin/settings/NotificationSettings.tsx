@@ -16,11 +16,13 @@ export const NotificationSettings = () => {
   const [currentlyPlaying, setCurrentlyPlaying] = useState<string | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const dialogCloseRef = useRef<HTMLButtonElement>(null);
 
   const loadSounds = async () => {
     try {
       setLoading(true);
       const data = await getNotificationSounds();
+      console.log("Loaded notification sounds:", data);
       setSounds(data);
     } catch (error) {
       console.error("Error loading notification sounds:", error);
@@ -55,7 +57,9 @@ export const NotificationSettings = () => {
     
     try {
       setUploading(true);
+      console.log("Starting file upload:", file.name);
       const newSound = await uploadNotificationSound(file);
+      console.log("Upload successful, new sound:", newSound);
       setSounds(prevSounds => [newSound, ...prevSounds]);
       
       toast({
@@ -84,6 +88,7 @@ export const NotificationSettings = () => {
     
     try {
       setLoading(true);
+      console.log("Deleting sound:", sound);
       
       // Stop playing if this sound is currently playing
       if (currentlyPlaying === sound.id) {
@@ -94,7 +99,13 @@ export const NotificationSettings = () => {
       }
       
       await deleteNotificationSound(sound.id, sound.file_path);
+      console.log("Sound deleted successfully");
       setSounds(prevSounds => prevSounds.filter(s => s.id !== sound.id));
+      
+      // Close the dialog
+      if (dialogCloseRef.current) {
+        dialogCloseRef.current.click();
+      }
       
       toast({
         title: "ลบเสียงแจ้งเตือนสำเร็จ",
@@ -117,7 +128,9 @@ export const NotificationSettings = () => {
     
     try {
       setLoading(true);
+      console.log("Setting default sound:", sound);
       await setDefaultNotificationSound(sound.id);
+      console.log("Default sound set successfully");
       
       // Update local state
       setSounds(prevSounds => prevSounds.map(s => ({
@@ -275,7 +288,7 @@ export const NotificationSettings = () => {
                             ยกเลิก
                           </Button>
                         </DialogClose>
-                        <DialogClose asChild>
+                        <DialogClose asChild ref={dialogCloseRef}>
                           <Button 
                             variant="destructive" 
                             onClick={() => handleDeleteSound(sound)}
