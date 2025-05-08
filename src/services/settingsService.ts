@@ -69,6 +69,27 @@ export const getNotificationSounds = async () => {
   return data;
 };
 
+// Get default notification sounds
+export const getDefaultNotificationSounds = async () => {
+  const { data, error } = await supabase
+    .from("notification_sounds")
+    .select("*")
+    .eq("is_default", true);
+
+  if (error) {
+    console.error("Error fetching default notification sound:", error);
+    throw error;
+  }
+
+  // Check if there's at least one default sound
+  if (!data || data.length === 0) {
+    console.log("No default notification sound found");
+    return null;
+  }
+
+  return data;
+};
+
 // Upload a notification sound file
 export const uploadNotificationSound = async (file: File) => {
   const fileExt = file.name.split('.').pop();
@@ -184,4 +205,54 @@ export const setDefaultNotificationSound = async (id: string) => {
 
   console.log("Default notification sound set successfully:", data);
   return data[0];
+};
+
+// Get default notification settings for customer queue notifications
+export const getDefaultNotificationSettings = async () => {
+  try {
+    // First check if there's a system setting for default sounds
+    const settings = await getSettingsByCategory("notification");
+    const defaultSoundsSetting = settings.find(s => s.key === "default_sounds");
+    
+    if (defaultSoundsSetting && defaultSoundsSetting.value) {
+      console.log("Found default sounds in settings:", defaultSoundsSetting.value);
+      return defaultSoundsSetting.value;
+    }
+    
+    // If no setting exists, check for default sounds in notification_sounds table
+    const defaultSounds = await getDefaultNotificationSounds();
+    if (defaultSounds && defaultSounds.length > 0) {
+      const defaults = {
+        almostSound: null,
+        servingSound: null
+      };
+      
+      // We'll use the same sound for both notifications if only one default exists
+      if (defaultSounds.length === 1) {
+        defaults.almostSound = defaultSounds[0].file_path;
+        defaults.servingSound = defaultSounds[0].file_path;
+      } else {
+        // If there are multiple defaults, use the most recent ones
+        defaults.almostSound = defaultSounds[0].file_path;
+        defaults.servingSound = defaultSounds[0].file_path;
+      }
+      
+      console.log("Using default sounds from notification_sounds table:", defaults);
+      return defaults;
+    }
+    
+    // Fall back to built-in defaults
+    console.log("Using built-in default sounds");
+    return {
+      almostSound: "/notification.mp3",
+      servingSound: "/urgent-notification.mp3"
+    };
+  } catch (error) {
+    console.error("Error getting default notification settings:", error);
+    // Fall back to built-in defaults
+    return {
+      almostSound: "/notification.mp3",
+      servingSound: "/urgent-notification.mp3"
+    };
+  }
 };
