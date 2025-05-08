@@ -1,0 +1,17 @@
+
+{
+  "name": "Com7 QUEUE",
+  "short_name": "Com7 QUEUE",
+  "description": "Advanced queue management system for service businesses",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#4F46E5",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "64x64",
+      "type": "image/x-icon"
+    }
+  ]
+}

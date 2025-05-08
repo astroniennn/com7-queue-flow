@@ -100,8 +100,7 @@ serve(async (req) => {
       }
       
       // Get the subscription from the database
-      const { data: subscriptions, error: fetchError } = await supabase
-        .from("push_subscriptions")
+      const { data: subscriptions, error: fetchError } = await supabase.from("push_subscriptions")
         .select("*")
         .eq("ticket_id", ticketId);
       
@@ -193,7 +192,7 @@ serve(async (req) => {
     } catch (error) {
       console.error("Error processing request:", error);
       return new Response(
-        JSON.stringify({ error: error.message }), 
+        JSON.stringify({ error: error instanceof Error ? error.message : String(error) }), 
         { status: 500, headers: { "Content-Type": "application/json" } }
       );
     }

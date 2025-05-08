@@ -117,7 +117,7 @@ export const usePushNotifications = (ticketId?: string) => {
       return newSubscription;
     } catch (error) {
       console.error('Error subscribing to notifications:', error);
-      toast.error(`ไม่สามารถเปิดการแจ้งเตือนได้: ${error.message}`);
+      toast.error(`ไม่สามารถเปิดการแจ้งเตือนได้: ${error instanceof Error ? error.message : String(error)}`);
       return null;
     } finally {
       setIsRegistering(false);
@@ -134,10 +134,8 @@ export const usePushNotifications = (ticketId?: string) => {
       
       // Delete subscription from our backend
       if (ticketId) {
-        await supabase
-          .from('push_subscriptions')
-          .delete()
-          .eq('ticket_id', ticketId);
+        // Using a direct SQL query to delete the subscription since the types are not updated yet
+        await supabase.rpc('delete_push_subscription', { ticket_id_param: ticketId });
       }
       
       setSubscription(null);
@@ -148,7 +146,7 @@ export const usePushNotifications = (ticketId?: string) => {
       return true;
     } catch (error) {
       console.error('Error unsubscribing from notifications:', error);
-      toast.error(`ไม่สามารถยกเลิกการแจ้งเตือนได้: ${error.message}`);
+      toast.error(`ไม่สามารถยกเลิกการแจ้งเตือนได้: ${error instanceof Error ? error.message : String(error)}`);
       return false;
     }
   };
@@ -161,25 +159,21 @@ export const usePushNotifications = (ticketId?: string) => {
       // Convert subscription to JSON to store in database
       const subscriptionJSON = subscription.toJSON();
       
-      // Save to Supabase
-      const { data, error } = await supabase
-        .from('push_subscriptions')
-        .upsert([
-          {
-            ticket_id: ticketId,
-            endpoint: subscription.endpoint,
-            p256dh: subscriptionJSON.keys?.p256dh || '',
-            auth: subscriptionJSON.keys?.auth || '',
-            subscription_data: subscriptionJSON
-          }
-        ], { onConflict: 'ticket_id' });
+      // Using direct SQL query to insert subscription since the types are not updated yet
+      const { error } = await supabase.rpc('upsert_push_subscription', { 
+        ticket_id_param: ticketId,
+        endpoint_param: subscription.endpoint,
+        p256dh_param: subscriptionJSON.keys?.p256dh || '',
+        auth_param: subscriptionJSON.keys?.auth || '',
+        subscription_data_param: subscriptionJSON
+      });
       
       if (error) {
         console.error('Error saving subscription to database:', error);
         throw error;
       }
       
-      console.log('Subscription saved:', data);
+      console.log('Subscription saved successfully');
     } catch (error) {
       console.error('Error saving subscription:', error);
       throw error;

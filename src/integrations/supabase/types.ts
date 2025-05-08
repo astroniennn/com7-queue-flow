@@ -33,6 +33,36 @@ export type Database = {
         }
         Relationships: []
       }
+      push_subscriptions: {
+        Row: {
+          auth: string
+          created_at: string
+          endpoint: string
+          id: string
+          p256dh: string
+          subscription_data: Json
+          ticket_id: string
+        }
+        Insert: {
+          auth: string
+          created_at?: string
+          endpoint: string
+          id?: string
+          p256dh: string
+          subscription_data: Json
+          ticket_id: string
+        }
+        Update: {
+          auth?: string
+          created_at?: string
+          endpoint?: string
+          id?: string
+          p256dh?: string
+          subscription_data?: Json
+          ticket_id?: string
+        }
+        Relationships: []
+      }
       queue: {
         Row: {
           completed_at: string | null
