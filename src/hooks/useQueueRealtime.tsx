@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -280,6 +279,31 @@ export const useQueueRealtime = (
     });
   };
 
+  // Send push notification function
+  const sendPushNotification = async (status: "almost" | "serving" | "completed") => {
+    if (!ticketId) return;
+    
+    try {
+      console.log(`Sending push notification for ticket ${ticketId} with status ${status}`);
+      
+      // Call the Supabase Edge Function to send the push notification
+      const { data, error } = await supabase.functions.invoke("send-push-notification", {
+        body: {
+          ticketId,
+          status
+        }
+      });
+      
+      if (error) {
+        console.error("Error sending push notification:", error);
+      } else {
+        console.log("Push notification sent:", data);
+      }
+    } catch (err) {
+      console.error("Error invoking push notification function:", err);
+    }
+  };
+
   useEffect(() => {
     if (!queueData || !ticketId) return;
     
@@ -338,6 +362,8 @@ export const useQueueRealtime = (
               );
               // Play notification sound
               playNotificationSound(notificationSoundUrl);
+              // Send push notification
+              sendPushNotification("almost");
             } else if (newStatus === 'serving') {
               toast(
                 <div className="flex items-center">
@@ -351,6 +377,11 @@ export const useQueueRealtime = (
               );
               // Play urgent notification sound
               playNotificationSound(urgentSoundUrl);
+              // Send push notification
+              sendPushNotification("serving");
+            } else if (newStatus === 'completed') {
+              // Send completed push notification
+              sendPushNotification("completed");
             }
             
             // Update the queueData with the new status
