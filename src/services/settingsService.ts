@@ -56,86 +56,107 @@ export const updateSetting = async (category: SystemSettingCategory, key: string
 
 // Get all notification sounds
 export const getNotificationSounds = async () => {
-  const { data, error } = await supabase
-    .from("notification_sounds")
-    .select("*")
-    .order("created_at", { ascending: false });
+  try {
+    console.log("Fetching notification sounds...");
+    const { data, error } = await supabase
+      .from("notification_sounds")
+      .select("*")
+      .order("created_at", { ascending: false });
 
-  if (error) {
-    console.error("Error fetching notification sounds:", error);
-    throw error;
+    if (error) {
+      console.error("Error fetching notification sounds:", error);
+      throw error;
+    }
+
+    console.log("Notification sounds fetched successfully:", data);
+    return data;
+  } catch (error) {
+    console.error("Exception in getNotificationSounds:", error);
+    // Return empty array instead of throwing
+    return [];
   }
-
-  return data;
 };
 
 // Get default notification sounds
 export const getDefaultNotificationSounds = async () => {
-  const { data, error } = await supabase
-    .from("notification_sounds")
-    .select("*")
-    .eq("is_default", true);
+  try {
+    console.log("Fetching default notification sounds...");
+    const { data, error } = await supabase
+      .from("notification_sounds")
+      .select("*")
+      .eq("is_default", true);
 
-  if (error) {
-    console.error("Error fetching default notification sound:", error);
-    throw error;
-  }
+    if (error) {
+      console.error("Error fetching default notification sound:", error);
+      throw error;
+    }
 
-  // Check if there's at least one default sound
-  if (!data || data.length === 0) {
-    console.log("No default notification sound found");
+    // Check if there's at least one default sound
+    if (!data || data.length === 0) {
+      console.log("No default notification sound found");
+      return null;
+    }
+
+    console.log("Default notification sounds found:", data);
+    return data;
+  } catch (error) {
+    console.error("Exception in getDefaultNotificationSounds:", error);
+    // Return null instead of throwing
     return null;
   }
-
-  return data;
 };
 
 // Upload a notification sound file
 export const uploadNotificationSound = async (file: File) => {
-  const fileExt = file.name.split('.').pop();
-  const fileName = `${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
-  const filePath = `${fileName}`;
+  try {
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
+    const filePath = `${fileName}`;
 
-  console.log("Attempting to upload file to storage bucket:", filePath);
-  
-  // Upload file to storage
-  const { error: uploadError, data: uploadData } = await supabase.storage
-    .from("notification-sounds")
-    .upload(filePath, file, {
-      cacheControl: '3600',
-      upsert: false
-    });
+    console.log("Attempting to upload file to storage bucket:", filePath);
+    
+    // Upload file to storage
+    const { error: uploadError, data: uploadData } = await supabase.storage
+      .from("notification-sounds")
+      .upload(filePath, file, {
+        cacheControl: '3600',
+        upsert: false
+      });
 
-  if (uploadError) {
-    console.error("Error uploading file:", uploadError);
-    throw uploadError;
-  }
+    if (uploadError) {
+      console.error("Error uploading file:", uploadError);
+      throw uploadError;
+    }
 
-  console.log("File uploaded successfully:", uploadData);
+    console.log("File uploaded successfully:", uploadData);
 
-  // Get the public URL
-  const { data: { publicUrl } } = supabase.storage
-    .from("notification-sounds")
-    .getPublicUrl(filePath);
+    // Get the public URL
+    const { data: { publicUrl } } = supabase.storage
+      .from("notification-sounds")
+      .getPublicUrl(filePath);
 
-  console.log("Public URL generated:", publicUrl);
+    console.log("Public URL generated:", publicUrl);
 
-  // Add record to notification_sounds table
-  const { data, error } = await supabase
-    .from("notification_sounds")
-    .insert({
-      name: file.name,
-      file_path: publicUrl
-    })
-    .select();
+    // Add record to notification_sounds table
+    const { data, error } = await supabase
+      .from("notification_sounds")
+      .insert({
+        name: file.name,
+        file_path: publicUrl
+      })
+      .select();
 
-  if (error) {
-    console.error("Error adding notification sound record:", error);
+    if (error) {
+      console.error("Error adding notification sound record:", error);
+      throw error;
+    }
+
+    console.log("Notification sound record added:", data);
+    return data[0];
+  } catch (error) {
+    console.error("Exception in uploadNotificationSound:", error);
     throw error;
   }
-
-  console.log("Notification sound record added:", data);
-  return data[0];
 };
 
 // Delete a notification sound
@@ -210,13 +231,29 @@ export const setDefaultNotificationSound = async (id: string) => {
 // Get default notification settings for customer queue notifications
 export const getDefaultNotificationSettings = async () => {
   try {
+    console.log("Fetching default notification settings...");
+    
     // First check if there's a system setting for default sounds
     const settings = await getSettingsByCategory("notification");
     const defaultSoundsSetting = settings.find(s => s.key === "default_sounds");
     
     if (defaultSoundsSetting && defaultSoundsSetting.value) {
       console.log("Found default sounds in settings:", defaultSoundsSetting.value);
-      return defaultSoundsSetting.value;
+      
+      // Parse the value if it's a string
+      let defaultSounds;
+      if (typeof defaultSoundsSetting.value === 'string') {
+        try {
+          defaultSounds = JSON.parse(defaultSoundsSetting.value);
+        } catch (e) {
+          console.error("Error parsing default sounds:", e);
+          defaultSounds = defaultSoundsSetting.value;
+        }
+      } else {
+        defaultSounds = defaultSoundsSetting.value;
+      }
+      
+      return defaultSounds;
     }
     
     // If no setting exists, check for default sounds in notification_sounds table

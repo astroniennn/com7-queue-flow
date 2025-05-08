@@ -17,6 +17,43 @@ const QueueStatusPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [queueData, setQueueData] = useState<QueueData | undefined>(location.state?.queueData);
   
+  // Initialize audio context on page load or user interaction
+  useEffect(() => {
+    const initAudio = () => {
+      try {
+        // Try to initialize audio context on page load
+        const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
+        if (AudioContext) {
+          const audioContext = new AudioContext();
+          console.log("Audio context created with state:", audioContext.state);
+          
+          // If suspended (common in Safari/iOS), we'll need user interaction
+          if (audioContext.state === "suspended") {
+            console.log("Audio context suspended, waiting for user interaction");
+            
+            // Listen for user interaction to resume audio context
+            const resumeAudio = () => {
+              audioContext.resume().then(() => {
+                console.log("Audio context resumed:", audioContext.state);
+              }).catch(err => {
+                console.error("Failed to resume audio context:", err);
+              });
+            };
+            
+            // Add listeners for common user interactions
+            document.addEventListener('click', resumeAudio, { once: true });
+            document.addEventListener('touchstart', resumeAudio, { once: true });
+            document.addEventListener('keydown', resumeAudio, { once: true });
+          }
+        }
+      } catch (error) {
+        console.error("Error initializing audio context:", error);
+      }
+    };
+    
+    initAudio();
+  }, []);
+  
   // Fetch queue data if not available in location state
   useEffect(() => {
     const fetchQueueData = async () => {

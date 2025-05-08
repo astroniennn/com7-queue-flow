@@ -1,9 +1,9 @@
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Bell, AlertCircle } from "lucide-react";
-import { getSettingsByCategory } from "@/services/settingsService";
+import { getSettingsByCategory, getDefaultNotificationSettings } from "@/services/settingsService";
 
 // Define interface for Supabase realtime payload
 interface SupabaseRealtimePayload {
@@ -43,47 +43,120 @@ export const useQueueRealtime = (
 ) => {
   const [notificationSoundUrl, setNotificationSoundUrl] = useState<string>("/notification.mp3");
   const [urgentSoundUrl, setUrgentSoundUrl] = useState<string>("/urgent-notification.mp3");
+  const audioTestRef = useRef<HTMLAudioElement | null>(null);
+  const [isAudioEnabled, setIsAudioEnabled] = useState<boolean>(false);
+  
+  // Check if audio is allowed and initialize audio context if needed
+  useEffect(() => {
+    const checkAudioPermission = async () => {
+      try {
+        // Create a silent audio context to unblock audio in browsers that require user interaction
+        const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
+        if (AudioContext) {
+          const audioContext = new AudioContext();
+          
+          if (audioContext.state === "suspended") {
+            // Try to resume the audio context
+            await audioContext.resume();
+          }
+          
+          console.log("Audio context state:", audioContext.state);
+          setIsAudioEnabled(audioContext.state === "running");
+          
+          // Create a test audio element and try to play it (will be silent)
+          const testAudio = new Audio();
+          testAudio.volume = 0.01; // Almost silent
+          testAudio.src = "data:audio/wav;base64,UklGRjIAAABXQVZFZm10IBIAAAABAAEAQB8AAEAfAAABAAgAAABmYWN0BAAAAAAAAABkYXRhAAAAAA==";
+          
+          testAudio.oncanplaythrough = () => {
+            const playPromise = testAudio.play();
+            if (playPromise !== undefined) {
+              playPromise
+                .then(() => {
+                  console.log("Audio playback is allowed");
+                  setIsAudioEnabled(true);
+                })
+                .catch(e => {
+                  console.warn("Audio playback was prevented:", e);
+                  setIsAudioEnabled(false);
+                });
+            }
+          };
+          
+          audioTestRef.current = testAudio;
+        }
+      } catch (error) {
+        console.error("Error setting up audio:", error);
+      }
+    };
+    
+    checkAudioPermission();
+    
+    // Cleanup
+    return () => {
+      if (audioTestRef.current) {
+        audioTestRef.current.pause();
+        audioTestRef.current = null;
+      }
+    };
+  }, []);
 
   // Fetch notification sound settings
   useEffect(() => {
     const fetchNotificationSounds = async () => {
       try {
-        // Fetch default notification sounds from system settings
-        const notificationSettings = await getSettingsByCategory("notification");
-        const defaultSounds = notificationSettings.find(setting => setting.key === "default_sounds");
+        // First try to get notification settings using getDefaultNotificationSettings
+        const defaultSettings = await getDefaultNotificationSettings();
+        console.log("Default notification settings:", defaultSettings);
         
-        if (defaultSounds && defaultSounds.value) {
-          let sounds;
-          try {
-            sounds = typeof defaultSounds.value === 'string' ? 
-                      JSON.parse(defaultSounds.value) : 
-                      defaultSounds.value;
-                      
-            if (sounds.almostSound) {
-              console.log("Using custom almost sound:", sounds.almostSound);
-              setNotificationSoundUrl(sounds.almostSound);
-              // Pre-load sound
-              if (!audioCache[sounds.almostSound]) {
-                const audio = new Audio(sounds.almostSound);
-                audio.load();
-                audioCache[sounds.almostSound] = audio;
+        if (defaultSettings) {
+          if (defaultSettings.almostSound) {
+            console.log("Using custom almost sound:", defaultSettings.almostSound);
+            setNotificationSoundUrl(defaultSettings.almostSound);
+            // Pre-load sound
+            preloadSound(defaultSettings.almostSound);
+          }
+          
+          if (defaultSettings.servingSound) {
+            console.log("Using custom serving sound:", defaultSettings.servingSound);
+            setUrgentSoundUrl(defaultSettings.servingSound);
+            // Pre-load sound
+            preloadSound(defaultSettings.servingSound);
+          }
+        } else {
+          // Fallback to fetching notification settings directly
+          const notificationSettings = await getSettingsByCategory("notification");
+          const defaultSounds = notificationSettings.find(setting => setting.key === "default_sounds");
+          
+          if (defaultSounds && defaultSounds.value) {
+            let sounds;
+            try {
+              sounds = typeof defaultSounds.value === 'string' ? 
+                        JSON.parse(defaultSounds.value) : 
+                        defaultSounds.value;
+                        
+              if (sounds.almostSound) {
+                console.log("Using custom almost sound (direct):", sounds.almostSound);
+                setNotificationSoundUrl(sounds.almostSound);
+                // Pre-load sound
+                preloadSound(sounds.almostSound);
               }
-            }
-            
-            if (sounds.servingSound) {
-              console.log("Using custom serving sound:", sounds.servingSound);
-              setUrgentSoundUrl(sounds.servingSound);
-              // Pre-load sound
-              if (!audioCache[sounds.servingSound]) {
-                const audio = new Audio(sounds.servingSound);
-                audio.load();
-                audioCache[sounds.servingSound] = audio;
+              
+              if (sounds.servingSound) {
+                console.log("Using custom serving sound (direct):", sounds.servingSound);
+                setUrgentSoundUrl(sounds.servingSound);
+                // Pre-load sound
+                preloadSound(sounds.servingSound);
               }
+            } catch (parseError) {
+              console.error("Error parsing notification sound settings:", parseError);
             }
-          } catch (parseError) {
-            console.error("Error parsing notification sound settings:", parseError);
           }
         }
+        
+        // Preload default sounds as fallback
+        preloadSound("/notification.mp3");
+        preloadSound("/urgent-notification.mp3");
       } catch (error) {
         console.error("Error fetching notification sound settings:", error);
       }
@@ -92,17 +165,69 @@ export const useQueueRealtime = (
     fetchNotificationSounds();
   }, []);
 
+  // Preload sound function
+  const preloadSound = (soundUrl: string) => {
+    try {
+      if (!audioCache[soundUrl]) {
+        console.log("Preloading sound:", soundUrl);
+        const audio = new Audio(soundUrl);
+        
+        // Add event listeners for debugging
+        audio.addEventListener('canplaythrough', () => {
+          console.log(`Sound loaded successfully: ${soundUrl}`);
+        });
+        
+        audio.addEventListener('error', (e) => {
+          console.error(`Error loading sound ${soundUrl}:`, e);
+        });
+        
+        audio.load();
+        audioCache[soundUrl] = audio;
+      }
+    } catch (error) {
+      console.error("Error preloading sound:", error);
+    }
+  };
+
+  // Play notification sound function with robust error handling
   const playNotificationSound = (soundUrl: string) => {
     console.log("Attempting to play sound:", soundUrl);
     
+    if (!isAudioEnabled) {
+      console.warn("Audio playback seems to be blocked by browser. Attempting to unblock...");
+      // Try to unblock audio with a user interaction if possible
+      if (audioTestRef.current) {
+        const unblockPromise = audioTestRef.current.play();
+        if (unblockPromise !== undefined) {
+          unblockPromise
+            .then(() => {
+              console.log("Audio unblocked successfully");
+              setIsAudioEnabled(true);
+              // Now try to play the actual notification
+              attemptSoundPlay(soundUrl);
+            })
+            .catch(e => {
+              console.error("Could not unblock audio:", e);
+            });
+        }
+      }
+      return;
+    }
+    
+    attemptSoundPlay(soundUrl);
+  };
+  
+  // Helper function to attempt sound playback with multiple fallback options
+  const attemptSoundPlay = (soundUrl: string) => {
     try {
       // Try to use cached audio object if available
       if (audioCache[soundUrl]) {
-        console.log("Using cached audio object");
+        console.log("Using cached audio object for:", soundUrl);
         const cachedAudio = audioCache[soundUrl];
         
         // Reset audio to beginning in case it was already played
         cachedAudio.currentTime = 0;
+        cachedAudio.volume = 1.0;
         
         // Create play promise and handle it
         const playPromise = cachedAudio.play();
@@ -111,26 +236,48 @@ export const useQueueRealtime = (
           playPromise
             .then(() => console.log("Audio playback started successfully"))
             .catch(error => {
-              console.error("Error playing audio:", error);
+              console.error("Error playing cached audio:", error);
               // Fallback to creating a new Audio object
-              const newAudio = new Audio(soundUrl);
-              newAudio.play().catch(e => console.log("Fallback audio play error:", e));
+              fallbackPlaySound(soundUrl);
             });
         }
       } else {
         // Create new Audio object if not cached
-        console.log("Creating new audio object");
-        const audio = new Audio(soundUrl);
-        
-        // Cache the audio object for future use
-        audioCache[soundUrl] = audio;
-        
-        // Play the sound
-        audio.play().catch(e => console.log("Audio play error:", e));
+        fallbackPlaySound(soundUrl);
       }
     } catch (error) {
       console.error("Error in playNotificationSound:", error);
+      // Final fallback - try with default system sounds
+      const defaultSound = soundUrl.includes("urgent") ? "/urgent-notification.mp3" : "/notification.mp3";
+      console.log("Attempting to play default sound:", defaultSound);
+      try {
+        const audio = new Audio(defaultSound);
+        audio.play().catch(e => console.error("Final fallback audio play error:", e));
+      } catch (finalError) {
+        console.error("Could not play any notification sound:", finalError);
+      }
     }
+  };
+  
+  // Fallback play function
+  const fallbackPlaySound = (soundUrl: string) => {
+    console.log("Creating new audio object for:", soundUrl);
+    const audio = new Audio(soundUrl);
+    audio.volume = 1.0;
+    
+    // Cache the audio object for future use
+    audioCache[soundUrl] = audio;
+    
+    // Play the sound
+    audio.play().catch(e => {
+      console.error("Audio play error:", e);
+      // Try one more time with a user interaction if needed
+      document.addEventListener('click', function playOnClick() {
+        console.log("Attempting to play on user interaction");
+        audio.play().catch(err => console.error("Play on click failed:", err));
+        document.removeEventListener('click', playOnClick);
+      }, { once: true });
+    });
   };
 
   useEffect(() => {
@@ -247,5 +394,5 @@ export const useQueueRealtime = (
       console.log("Removing channel subscription");
       supabase.removeChannel(specificTicketChannel);
     };
-  }, [ticketId, queueData, updateQueueData, notificationSoundUrl, urgentSoundUrl]);
+  }, [ticketId, queueData, updateQueueData, notificationSoundUrl, urgentSoundUrl, isAudioEnabled]);
 };
