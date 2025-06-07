@@ -175,7 +175,7 @@ export const usePushNotifications = (ticketId?: string) => {
           endpoint: subscription.endpoint,
           p256dh: subscriptionJSON.keys?.p256dh || '',
           auth: subscriptionJSON.keys?.auth || '',
-          subscription_data: subscriptionJSON
+          subscription_data: subscriptionJSON as any // Cast to any to satisfy Json type
         }, {
           onConflict: 'ticket_id'
         });
