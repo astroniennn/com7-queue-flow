@@ -134,8 +134,16 @@ export const usePushNotifications = (ticketId?: string) => {
       
       // Delete subscription from our backend
       if (ticketId) {
-        // Using a direct SQL query to delete the subscription since the types are not updated yet
-        await supabase.rpc('delete_push_subscription', { ticket_id_param: ticketId });
+        // Using direct database call instead of RPC to avoid TypeScript issues
+        const { error } = await supabase
+          .from('push_subscriptions')
+          .delete()
+          .eq('ticket_id', ticketId);
+        
+        if (error) {
+          console.error('Error deleting subscription from database:', error);
+          throw error;
+        }
       }
       
       setSubscription(null);
@@ -159,14 +167,18 @@ export const usePushNotifications = (ticketId?: string) => {
       // Convert subscription to JSON to store in database
       const subscriptionJSON = subscription.toJSON();
       
-      // Using direct SQL query to insert subscription since the types are not updated yet
-      const { error } = await supabase.rpc('upsert_push_subscription', { 
-        ticket_id_param: ticketId,
-        endpoint_param: subscription.endpoint,
-        p256dh_param: subscriptionJSON.keys?.p256dh || '',
-        auth_param: subscriptionJSON.keys?.auth || '',
-        subscription_data_param: subscriptionJSON
-      });
+      // Using direct database upsert instead of RPC to avoid TypeScript issues
+      const { error } = await supabase
+        .from('push_subscriptions')
+        .upsert({
+          ticket_id: ticketId,
+          endpoint: subscription.endpoint,
+          p256dh: subscriptionJSON.keys?.p256dh || '',
+          auth: subscriptionJSON.keys?.auth || '',
+          subscription_data: subscriptionJSON
+        }, {
+          onConflict: 'ticket_id'
+        });
       
       if (error) {
         console.error('Error saving subscription to database:', error);
